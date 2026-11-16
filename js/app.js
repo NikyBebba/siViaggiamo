@@ -424,10 +424,29 @@
 
   function waitMoveEnd(token) {
     return new Promise((resolve) => {
-      if (!map) { resolve(); return; }
-      const done = () => { map.off('moveend', done); resolve(); };
-      map.once('moveend', done);
-      window.setTimeout(() => { if (token === travelToken) { map.off('moveend', done); resolve(); } }, 3500);
+      if (!map) { resolve(false); return; }
+      let settled = false;
+      let timer = 0;
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        if (timer) window.clearTimeout(timer);
+        try { map.off('moveend', onEnd); } catch {}
+        resolve(ok);
+      };
+      const onEnd = () => {
+        if (settled) return;
+        if (token !== travelToken) { finish(false); return; }
+        // evita completamento spurio: se la mappa risulta ancora in animazione, attendi un successivo moveend
+        if (typeof map._animatingZoom === 'boolean' && map._animatingZoom) return;
+        finish(true);
+      };
+      map.on('moveend', onEnd);
+      // safety: non considerare completata l'animazione solo per timeout; fallback di non-completamento
+      timer = window.setTimeout(() => {
+        if (token !== travelToken) finish(false);
+        else finish(false);
+      }, 8000);
     });
   }
 
@@ -435,14 +454,18 @@
     if (!map || index < 0 || index >= stops.length) return false;
     const token = ++travelToken;
     const destination = coords[index];
-    map.stop();
+    try { map.stop(); } catch {}
     if (reduceMotion()) {
-      map.setView(destination, 9, { animate: false });
+      try { map.setView(destination, 9, { animate: false }); } catch { return false; }
       return token === travelToken;
     }
-    map.flyTo(destination, 9, { animate: true, duration: 1.9, easeLinearity: 0.22 });
-    await waitMoveEnd(token);
-    return token === travelToken;
+    try {
+      map.flyTo(destination, 9, { animate: true, duration: 1.9, easeLinearity: 0.22 });
+    } catch {
+      return false;
+    }
+    const ok = await waitMoveEnd(token);
+    return !!ok && token === travelToken;
   }
 
   async function focusStop(index, { open = false } = {}) {
@@ -533,6 +556,7 @@
     $('sheet-toggle')?.addEventListener('click', () => {
       state.sheetExpanded = !state.sheetExpanded;
       $('sheet-content').innerHTML = sheetHTML(index, state.sheetExpanded);
+      $('stop-sheet')?.classList.toggle('expanded', state.sheetExpanded);
       bindSheetEvents(index);
       $('sheet-toggle')?.focus();
     });
@@ -543,26 +567,62 @@
     });
   }
 
+  function renderSheetFallback(index, reason) {
+    const safeIndex = Number.isInteger(index) && index >= 0 && index < stops.length ? index : null;
+    const title = safeIndex != null ? (stops[safeIndex]?.title || `Tappa ${safeIndex + 1}`) : 'Tappa';
+    return `<div class="sheet-postcard compact"><div class="sheet-compact" style="grid-template-columns:1fr"><div class="sheet-compact-body"><h3 id="sheet-title">${escapeHTML(title)}</h3><p class="sheet-brief">Impossibile mostrare tutti i dettagli in questo momento. Puoi chiudere e riprovare.</p></div></div><div class="sheet-compact-actions"><button type="button" id="sheet-close-fallback" class="sheet-toggle-btn">Chiudi</button></div></div>`;
+  }
+
   function openSheet(index, { fromMarker = false, rerender = false } = {}) {
     if (index < 0 || index >= stops.length || !isStopRevealed(index)) return;
     if (state.mode === 'moving' || !isMapViewActive()) return;
+    const sheet = $('stop-sheet');
+    const content = $('sheet-content');
+    const overlay = $('sheet-overlay');
+    if (!sheet || !content || !overlay) return;
+
     state.activeStop = index;
     if (!rerender) state.sheetExpanded = false;
     const inGuidedReveal = state.mode === 'stop-revealed';
 
-    $('sheet-content').innerHTML = sheetHTML(index, state.sheetExpanded);
-    bindSheetEvents(index);
+    let html = '';
+    try {
+      html = sheetHTML(index, state.sheetExpanded);
+    } catch (err) {
+      html = '';
+    }
+    const valid = typeof html === 'string' && html.includes('sheet-postcard') && html.includes('id="sheet-title"') && html.replace(/<[^>]*>/g, '').trim().length > 10;
+    if (!valid) {
+      html = renderSheetFallback(index);
+      state.sheetExpanded = false;
+    }
+
+    try {
+      content.innerHTML = html;
+      bindSheetEvents(index);
+      // fallback button wiring if present
+      content.querySelector('#sheet-close-fallback')?.addEventListener('click', () => closeSheet());
+    } catch (err) {
+      content.innerHTML = renderSheetFallback(index);
+      content.querySelector('#sheet-close-fallback')?.addEventListener('click', () => closeSheet());
+    }
+
+    // ultima verifica: mai aprire un pannello vuoto
+    if ((content.innerText || '').trim().length < 4) {
+      content.innerHTML = renderSheetFallback(index);
+      content.querySelector('#sheet-close-fallback')?.addEventListener('click', () => closeSheet());
+    }
 
     if (!sheetIsOpen()) returnFocus = document.activeElement;
-    $('sheet-overlay').hidden = inGuidedReveal;
-    $('stop-sheet').classList.toggle('tour-mode', inGuidedReveal);
-    $('stop-sheet').classList.toggle('expanded', state.sheetExpanded);
-    $('stop-sheet').classList.add('open');
-    $('stop-sheet').setAttribute('aria-hidden', 'false');
+    overlay.hidden = inGuidedReveal;
+    sheet.classList.toggle('tour-mode', inGuidedReveal);
+    sheet.classList.toggle('expanded', state.sheetExpanded);
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = inGuidedReveal ? '' : 'hidden';
 
     if (map && !inGuidedReveal && !fromMarker) {
-      map.panTo(coords[index], { animate: !reduceMotion() });
+      try { map.panTo(coords[index], { animate: !reduceMotion() }); } catch {}
     }
     if (!rerender) $('close-sheet')?.focus();
     saveJourneyState();
@@ -753,12 +813,20 @@
   async function advanceTour() {
     if (!map || state.mode === 'moving') return;
 
-    if (isJourneyCompleted()) {
+    // In stop-revealed sull'ultima tappa già svelata, il prossimo avanzamento chiude il tour.
+    if (state.mode === 'stop-revealed' && state.revealed >= stops.length) {
+      closeSheet({ restoreFocus: false });
+      finishTour({ fromReveal: true });
+      return;
+    }
+
+    // Post-completamento: azioni di esplorazione/ripresa, non avanzamento tappe.
+    if (canExploreFreely() || (state.mode === 'completed' && state.revealed >= stops.length)) {
       if (state.mode === 'completed' && !state.completionAcknowledged) { acknowledgeCompletion(); return; }
       if (state.mode === 'completed') state.mode = 'free-exploration';
       saveJourneyState();
       updateUI();
-      fitRoute(true);
+      if (isMapViewActive()) fitRoute(true);
       return;
     }
 
