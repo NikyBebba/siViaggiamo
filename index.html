@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,20,1;9..144,700,20,1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="css/style.css?v=1.4" />
+  <link rel="stylesheet" href="css/style.css?v=1.5" />
 </head>
 <body>
   <div class="shell">
@@ -45,7 +45,6 @@
           <button class="map-reset" id="fit-map" aria-label="Mostra tutto il percorso" title="Mostra tutto il percorso">⌖</button>
           <div class="map-help">✦ Tocca un pin numerato!</div>
         </div>
-        <div class="map-footer"><span>✦ La nostra avventura</span><div class="map-footer-actions"><button id="restart-tour" class="text-btn" type="button">Rivivi la sorpresa ↺</button><button id="view-stops" class="text-btn" type="button">Tutte le tappe →</button></div></div>
         <p id="map-status" class="map-status" role="status" aria-live="polite" hidden></p>
       </section>
       <section id="stops" class="view stops-view" aria-labelledby="stops-title">
@@ -75,12 +74,19 @@
     <div class="sheet-handle"></div><button class="sheet-close" id="close-sheet" aria-label="Chiudi la tappa">×</button>
     <div id="sheet-content"></div>
   </aside>
-  <section class="journey-guide" id="journey-guide" hidden aria-live="polite" aria-label="Scoperta guidata del viaggio">
-    <div class="guide-top"><span class="guide-label" id="guide-label">La sorpresa di Martina</span><button type="button" class="guide-skip" id="guide-skip">Esplora liberamente ×</button></div>
-    <strong id="guide-title">Martina, pronta a partire?</strong>
-    <p id="guide-text">Premi il pulsante per scoprire la prima tappa: la mappa ti accompagnerà nel viaggio.</p>
-    <div class="guide-progress" id="guide-progress" aria-label="Progressi della scoperta"></div>
-    <button class="guide-next" type="button" id="guide-next">Scopri la prima tappa</button>
+  <section class="journey-guide" id="journey-guide" hidden aria-live="polite" aria-label="Controlli del viaggio">
+    <div class="guide-compact-row">
+      <div class="guide-main">
+        <span class="guide-label" id="guide-label">La sorpresa di Martina</span>
+        <strong id="guide-title">Martina, pronta a partire?</strong>
+        <p id="guide-text" class="guide-text">Premi il pulsante per iniziare.</p>
+        <div class="guide-progress" id="guide-progress" aria-label="Progressi della scoperta"></div>
+      </div>
+      <div class="guide-actions">
+        <button class="guide-next" type="button" id="guide-next">Scopri la prima tappa</button>
+        <button type="button" class="guide-skip" id="guide-skip">Rivivi ↺</button>
+      </div>
+    </div>
   </section>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <div class="journey-finale" id="journey-finale" hidden aria-live="polite">
@@ -97,6 +103,6 @@
     </div>
   </div>
   <script src="js/destinations.js"></script>
-  <script src="js/app.js?v=1.4"></script>
+  <script src="js/app.js?v=1.5"></script>
 </body>
 </html>

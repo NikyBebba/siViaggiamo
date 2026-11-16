@@ -9,6 +9,8 @@
     mode: 'idle', // idle | moving | stop-revealed | completed | free-exploration
     activeStop: 0,
     revealed: 0,
+    sheetExpanded: false,
+    completionAcknowledged: sessionStorage.getItem('siViaggiamoCompletamentoConfermato') === 'yes',
     finalShown: sessionStorage.getItem('siViaggiamoFinaleMostrata') === 'yes',
   };
 
@@ -22,6 +24,7 @@
   let returnFocus = null;
   let tileErrorNotified = false;
   let travelToken = 0;
+  let completionTimer = 0;
   const markers = [];
   const coords = stops.map((s) => [s.lat, s.lng]);
   const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -42,47 +45,26 @@
       if (!el.textContent) el.textContent = '☺';
     }
   }
-
   document.querySelectorAll('.avatar-a').forEach((el) => applyAvatar(el, data?.travelers?.[0]));
   document.querySelectorAll('.avatar-b').forEach((el) => applyAvatar(el, data?.travelers?.[1]));
+
+  function isMapViewActive() { return $('map-view')?.classList.contains('active'); }
+  function canExploreFreely() { return state.mode === 'completed' || state.mode === 'free-exploration'; }
+  function isStopRevealed(index) { return canExploreFreely() || index < state.revealed; }
+  function sheetIsOpen() { return $('stop-sheet')?.classList.contains('open'); }
 
   function setMapStatus(message) {
     const el = $('map-status');
     if (!el) return;
-    if (!message) {
-      el.hidden = true;
-      el.textContent = '';
-      return;
-    }
-    el.hidden = false;
-    el.textContent = message;
-  }
-
-  function isMapViewActive() {
-    return $('map-view')?.classList.contains('active');
+    el.hidden = !message;
+    el.textContent = message || '';
   }
 
   function refreshMap() {
     if (!map || !isMapViewActive()) return;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        map.invalidateSize({ pan: false, animate: false });
-      });
-    });
-  }
-
-  function canExploreFreely() {
-    return state.mode === 'completed' || state.mode === 'free-exploration';
-  }
-
-  function isStopRevealed(index) {
-    return canExploreFreely() || index < state.revealed;
-  }
-
-  function setMode(mode) {
-    state.mode = mode;
-    updateGuide();
-    updateTimeline();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      map.invalidateSize({ pan: false, animate: false });
+    }));
   }
 
   function cancelTravel() {
@@ -90,15 +72,27 @@
     if (map) map.stop();
   }
 
+  function clearCompletionTimer() {
+    if (completionTimer) {
+      window.clearTimeout(completionTimer);
+      completionTimer = 0;
+    }
+  }
+
+  function setMode(mode) {
+    state.mode = mode;
+    updateUI();
+  }
+
   function goto(id) {
     const fromMap = isMapViewActive();
     if (fromMap && id !== 'map-view') {
       cancelTravel();
-      closeSheet({ restoreFocus: false });
+      clearCompletionTimer();
+      closeSheet({ restoreFocus: false, keepState: true });
       closeFinale({ restoreFocus: false });
       if (state.mode === 'moving') {
-        // Se si lascia la mappa durante il movimento, si torna a uno stato coerente.
-        state.mode = state.revealed >= stops.length ? 'completed' : 'idle';
+        state.mode = state.revealed >= stops.length ? 'completed' : (state.revealed === 0 ? 'idle' : 'stop-revealed');
       }
     }
 
@@ -121,6 +115,7 @@
       }, 120);
     }
     if (id === 'stops') updateTimeline();
+    updateUI();
   }
 
   function ensureMap() {
@@ -152,19 +147,14 @@
       updateWhenIdle: false,
       keepBuffer: 2,
     });
-
     tileLayer.on('tileerror', () => {
       if (tileErrorNotified) return;
       tileErrorNotified = true;
       setMapStatus('Alcune tessere della mappa potrebbero non caricarsi correttamente. Verifica la connessione a Internet.');
     });
-    tileLayer.on('load', () => {
-      if (tileErrorNotified) return;
-      setMapStatus('');
-    });
+    tileLayer.on('load', () => { if (!tileErrorNotified) setMapStatus(''); });
     tileLayer.addTo(map);
 
-    // Linea illustrativa (non percorso stradale).
     routeOutline = L.polyline([], { color: '#fff8ea', weight: 8, opacity: 0.95, lineCap: 'round', interactive: false }).addTo(map);
     routeLine = L.polyline([], { color: '#d39a72', weight: 4, dashArray: '3,11', lineCap: 'round', interactive: false }).addTo(map);
     routeRevealLine = L.polyline([], { color: '#5d9b6d', weight: 5, opacity: 0.95, lineCap: 'round', interactive: false }).addTo(map);
@@ -175,16 +165,13 @@
       marker.on('click', () => {
         if (state.mode === 'moving') return;
         if (!isStopRevealed(index)) return;
-        if (canExploreFreely() || state.mode === 'idle' || state.mode === 'stop-revealed') {
-          openSheet(index, { fromMarker: true });
-        }
+        openSheet(index, { fromMarker: true });
       });
       markers.push(marker);
       markerLayer.addLayer(marker);
     });
 
     map.whenReady(() => refreshMap());
-
     if ('ResizeObserver' in window) {
       let previous = { width: 0, height: 0 };
       resizeObserver = new ResizeObserver((entries) => {
@@ -198,11 +185,9 @@
       });
       resizeObserver.observe($('map'));
     }
-
     window.addEventListener('resize', refreshMap, { passive: true });
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') refreshMap();
-    });
+    window.addEventListener('orientationchange', () => setTimeout(refreshMap, 180), { passive: true });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshMap(); });
 
     renderProgress();
     fitRoute(false);
@@ -210,9 +195,9 @@
 
   function makePinIcon(index, active) {
     const stop = stops[index] || {};
-    const stateClass = active ? ' active' : (!isStopRevealed(index) && !canExploreFreely() ? ' locked' : '');
+    const hidden = !isStopRevealed(index);
     return L.divIcon({
-      className: 'pin-marker' + stateClass,
+      className: 'pin-marker' + (active ? ' active' : '') + (hidden ? ' locked' : ''),
       html: `<span style="background:${escapeHTML(stop.color || '#295642')}">${index + 1}</span>`,
       iconSize: [40, 40],
       iconAnchor: [20, 20],
@@ -227,8 +212,7 @@
     routeLine.setLatLngs(path);
 
     if (animateNewSegment && visibleCount >= 2 && !reduceMotion()) {
-      const segment = coords.slice(visibleCount - 2, visibleCount);
-      routeRevealLine.setLatLngs(segment);
+      routeRevealLine.setLatLngs(coords.slice(visibleCount - 2, visibleCount));
       animatePolylineReveal(routeRevealLine);
     } else {
       routeRevealLine.setLatLngs([]);
@@ -238,11 +222,8 @@
       const active = index === state.activeStop && (state.mode === 'stop-revealed' || state.mode === 'moving');
       marker.setIcon(makePinIcon(index, active));
       const visible = isStopRevealed(index);
-      if (visible) {
-        if (!markerLayer.hasLayer(marker)) marker.addTo(markerLayer);
-      } else if (markerLayer.hasLayer(marker)) {
-        markerLayer.removeLayer(marker);
-      }
+      if (visible) { if (!markerLayer.hasLayer(marker)) marker.addTo(markerLayer); }
+      else if (markerLayer.hasLayer(marker)) markerLayer.removeLayer(marker);
     });
     updateTimeline();
   }
@@ -255,7 +236,6 @@
       path.style.transition = 'none';
       path.style.strokeDasharray = `${length}`;
       path.style.strokeDashoffset = `${length}`;
-      // force reflow
       void path.getBoundingClientRect();
       path.style.transition = 'stroke-dashoffset 900ms ease-out';
       path.style.strokeDashoffset = '0';
@@ -266,9 +246,7 @@
           path.style.strokeDashoffset = '';
         }
       }, 950);
-    } catch {
-      // ignore SVG animation issues
-    }
+    } catch {}
   }
 
   function fitRoute(animate = true) {
@@ -278,24 +256,20 @@
     map.fitBounds(bounds.pad(0.22), { animate: animate && !reduceMotion(), maxZoom: 8, padding: [24, 24] });
   }
 
-  function buildTimeline() {
-    updateTimeline();
-  }
-
   function updateTimeline() {
     const list = $('stops-list');
     if (!list) return;
-
     const progress = $('trip-progress');
     if (progress) {
       const discovered = canExploreFreely() ? stops.length : state.revealed;
+      const status = canExploreFreely() ? 'Svelato' : (state.revealed === 0 ? 'Pronto' : 'In viaggio');
       progress.innerHTML = `<div class="progress-chip"><strong>${discovered}/${stops.length}</strong><span>Tappe scoperte</span></div>
-        <div class="progress-chip"><strong>${canExploreFreely() ? 'Completo' : (state.mode === 'idle' ? 'Pronto' : 'In corso')}</strong><span>Stato dell’avventura</span></div>`;
+        <div class="progress-chip"><strong>${status}</strong><span>Avventura</span></div>`;
     }
 
     list.innerHTML = stops.map((s, i) => {
       const revealed = isStopRevealed(i);
-      const current = i === state.activeStop && (state.mode === 'stop-revealed' || state.mode === 'moving' || canExploreFreely());
+      const current = i === state.activeStop && (state.mode === 'stop-revealed' || state.mode === 'moving' || state.mode === 'completed' || state.mode === 'free-exploration');
       const title = revealed ? escapeHTML(s.title) : 'Destinazione misteriosa';
       const desc = revealed ? escapeHTML(s.description || '') : 'Questa tappa si svelerà durante il viaggio sulla mappa.';
       const badge = revealed ? `Tappa ${i + 1}` : 'Da scoprire';
@@ -305,7 +279,6 @@
       const thumb = revealed
         ? (s.image ? `<img src="${escapeHTML(s.image)}" alt="" loading="lazy">` : `<span aria-hidden="true">${escapeHTML(s.icon || '☘')}</span>`)
         : '<span aria-hidden="true">?</span>';
-
       return `<article class="timeline-card ${revealed ? 'revealed' : 'locked'} ${current ? 'current' : ''}">
         <div class="timeline-axis"><div class="timeline-number" style="background:${revealed ? escapeHTML(s.color || '#295642') : '#9fb3a1'}">${revealed ? i + 1 : '•'}</div>${i < stops.length - 1 ? '<div class="timeline-line"></div>' : ''}</div>
         <div class="timeline-content">
@@ -335,17 +308,9 @@
   function waitMoveEnd(token) {
     return new Promise((resolve) => {
       if (!map) { resolve(); return; }
-      const done = () => {
-        map.off('moveend', done);
-        resolve();
-      };
+      const done = () => { map.off('moveend', done); resolve(); };
       map.once('moveend', done);
-      // fallback di sicurezza
-      window.setTimeout(() => {
-        if (token !== travelToken) return;
-        map.off('moveend', done);
-        resolve();
-      }, 3500);
+      window.setTimeout(() => { if (token === travelToken) { map.off('moveend', done); resolve(); } }, 3500);
     });
   }
 
@@ -354,21 +319,17 @@
     const token = ++travelToken;
     const destination = coords[index];
     map.stop();
-
     if (reduceMotion()) {
       map.setView(destination, 9, { animate: false });
       return token === travelToken;
     }
-
-    // Transizione affidabile: un unico flyTo percepibile (con eventuale lieve allontanamento implicito di Leaflet).
     map.flyTo(destination, 9, { animate: true, duration: 1.9, easeLinearity: 0.22 });
     await waitMoveEnd(token);
     return token === travelToken;
   }
 
   async function focusStop(index, { open = false } = {}) {
-    if (!map || index < 0 || index >= stops.length) return;
-    if (!isStopRevealed(index)) return;
+    if (!map || index < 0 || index >= stops.length || !isStopRevealed(index)) return;
     cancelTravel();
     state.activeStop = index;
     renderProgress();
@@ -377,42 +338,47 @@
     if (open && isMapViewActive()) openSheet(index, { fromMarker: false });
   }
 
-  function imageFallback(img) {
-    const wrap = img.closest('.sheet-img');
-    if (!wrap) return;
-    img.remove();
-    if (!wrap.querySelector('.sheet-fallback')) {
-      const icon = wrap.getAttribute('data-icon') || '☘';
-      wrap.insertAdjacentHTML('beforeend', `<span aria-hidden="true">${escapeHTML(icon)}</span><span class="photo-placeholder">FOTO IN ARRIVO ✦</span>`);
-      wrap.classList.add('sheet-fallback-wrap');
-    }
-  }
-
-  function openSheet(index, { fromMarker = false } = {}) {
-    if (index < 0 || index >= stops.length) return;
-    if (!isStopRevealed(index)) return;
-    state.activeStop = index;
+  function sheetHTML(index, expanded) {
     const s = stops[index];
     const mapsURL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.lat},${s.lng}`)}`;
     const inGuidedReveal = state.mode === 'stop-revealed';
     const isLast = state.revealed >= stops.length;
-
-    const action = inGuidedReveal
-      ? `<button type="button" id="sheet-advance" class="primary-sheet-btn">${isLast ? 'Termina la scoperta' : 'Scopri la prossima tappa'}</button>`
-      : '';
-
-    const navActions = inGuidedReveal
-      ? ''
-      : `<button type="button" id="prev-stop">← Precedente</button><button type="button" id="next-stop">Successiva →</button>`;
-
     const dayLabel = s.day ? `<span class="postcard-stamp">Giorno ${escapeHTML(s.day)}</span>` : '<span class="postcard-stamp">Cartolina</span>';
-    const photo = s.image
-      ? `<img src="${escapeHTML(s.image)}" alt="${escapeHTML(s.title)}" loading="lazy" onerror="this.dataset.failed='1'">`
+    const hasImage = !!s.image;
+    const compactPhoto = hasImage
+      ? `<img src="${escapeHTML(s.image)}" alt="" loading="lazy">`
+      : `<span aria-hidden="true">${escapeHTML(s.icon || '☘')}</span>`;
+    const fullPhoto = hasImage
+      ? `<img src="${escapeHTML(s.image)}" alt="${escapeHTML(s.title)}" loading="lazy">`
       : `<div class="sheet-placeholder-art"><span aria-hidden="true">${escapeHTML(s.icon || '☘')}</span><span class="photo-placeholder">FOTO IN ARRIVO ✦</span></div>`;
 
-    $('sheet-content').innerHTML = `<div class="sheet-postcard">
+    const primary = inGuidedReveal
+      ? `<button type="button" id="sheet-advance" class="primary-sheet-btn">${isLast ? 'Termina la scoperta' : 'Scopri la prossima tappa'}</button>`
+      : '';
+    const navActions = inGuidedReveal ? '' : `<button type="button" id="prev-stop">← Precedente</button><button type="button" id="next-stop">Successiva →</button>`;
+    const toggleLabel = expanded ? 'Mostra meno' : 'Espandi cartolina';
+    const brief = escapeHTML((s.description || '').slice(0, 90) + ((s.description || '').length > 90 ? '…' : ''));
+
+    if (!expanded) {
+      return `<div class="sheet-postcard compact">
+        <div class="sheet-compact">
+          <div class="sheet-compact-thumb" data-icon="${escapeHTML(s.icon || '☘')}" style="background:linear-gradient(140deg,${escapeHTML(s.color || '#295642')},#b7d3b3)">${compactPhoto}</div>
+          <div class="sheet-compact-body">
+            <div class="postcard-meta">${dayLabel}<span class="stop-tag">TAPPA ${index + 1}</span></div>
+            <h3 id="sheet-title">${escapeHTML(s.title)}</h3>
+            <p class="sheet-brief">${brief}</p>
+          </div>
+        </div>
+        <div class="sheet-compact-actions">
+          ${primary}
+          <button type="button" id="sheet-toggle" class="sheet-toggle-btn" aria-expanded="false">${toggleLabel} ↓</button>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="sheet-postcard expanded">
       <div class="sheet-img" data-icon="${escapeHTML(s.icon || '☘')}" style="background:linear-gradient(140deg,${escapeHTML(s.color || '#295642')},#b7d3b3)">
-        ${photo}
+        ${fullPhoto}
         <span class="sheet-sticker" aria-hidden="true">✦</span>
       </div>
       <div class="sheet-body">
@@ -421,55 +387,75 @@
         <p class="region">⌖ ${escapeHTML(s.region || 'Irlanda')}, Irlanda</p>
         <p class="description">${escapeHTML(s.description || '')}</p>
         <div class="dedication"><span class="dedication-tape" aria-hidden="true"></span><strong>♡ Una dedica per te</strong>${escapeHTML(s.dedication || '')}</div>
-        ${action}
-        <div class="sheet-actions"><a href="${mapsURL}" target="_blank" rel="noopener noreferrer">Apri su Google Maps ↗</a>${navActions}</div>
+        ${primary}
+        <div class="sheet-secondary-actions">
+          <a href="${mapsURL}" target="_blank" rel="noopener noreferrer">Apri su Google Maps ↗</a>
+          <button type="button" id="sheet-toggle" class="sheet-toggle-btn secondary" aria-expanded="true">${toggleLabel} ↑</button>
+        </div>
+        ${navActions ? `<div class="sheet-actions">${navActions}</div>` : ''}
         <p class="sheet-counter">Tappa ${index + 1} di ${stops.length}</p>
       </div>
     </div>`;
+  }
 
-    const img = $('sheet-content').querySelector('img');
+  function bindSheetEvents(index) {
+    const img = $('sheet-content')?.querySelector('img');
     if (img) {
-      img.addEventListener('error', () => imageFallback(img), { once: true });
+      img.addEventListener('error', () => {
+        const wrap = img.closest('.sheet-img, .sheet-compact-thumb');
+        if (!wrap) return;
+        img.remove();
+        wrap.innerHTML = `<span aria-hidden="true">${escapeHTML(stops[index]?.icon || '☘')}</span>`;
+      }, { once: true });
     }
+    $('sheet-advance')?.addEventListener('click', () => { closeSheet({ restoreFocus: false }); advanceTour(); });
+    $('prev-stop')?.addEventListener('click', () => { state.sheetExpanded = false; openSheet((index - 1 + stops.length) % stops.length, { rerender: true }); });
+    $('next-stop')?.addEventListener('click', () => { state.sheetExpanded = false; openSheet((index + 1) % stops.length, { rerender: true }); });
+    $('sheet-toggle')?.addEventListener('click', () => {
+      state.sheetExpanded = !state.sheetExpanded;
+      $('sheet-content').innerHTML = sheetHTML(index, state.sheetExpanded);
+      bindSheetEvents(index);
+      $('sheet-toggle')?.focus();
+    });
+  }
 
-    const prev = $('prev-stop');
-    const next = $('next-stop');
-    if (prev) prev.addEventListener('click', () => openSheet((index - 1 + stops.length) % stops.length));
-    if (next) next.addEventListener('click', () => openSheet((index + 1) % stops.length));
+  function openSheet(index, { fromMarker = false, rerender = false } = {}) {
+    if (index < 0 || index >= stops.length || !isStopRevealed(index)) return;
+    if (state.mode === 'moving') return;
+    state.activeStop = index;
+    if (!rerender) state.sheetExpanded = false;
+    const inGuidedReveal = state.mode === 'stop-revealed';
 
-    const advance = $('sheet-advance');
-    if (advance) {
-      advance.addEventListener('click', () => {
-        closeSheet({ restoreFocus: false });
-        advanceTour();
-      });
-    }
+    $('sheet-content').innerHTML = sheetHTML(index, state.sheetExpanded);
+    bindSheetEvents(index);
 
-    returnFocus = document.activeElement;
-    $('sheet-overlay').hidden = inGuidedReveal;
+    if (!sheetIsOpen()) returnFocus = document.activeElement;
+    $('sheet-overlay').hidden = inGuidedReveal; // nessun overlay scuro in tour
     $('stop-sheet').classList.toggle('tour-mode', inGuidedReveal);
+    $('stop-sheet').classList.toggle('expanded', state.sheetExpanded);
     $('stop-sheet').classList.add('open');
     $('stop-sheet').setAttribute('aria-hidden', 'false');
     document.body.style.overflow = inGuidedReveal ? '' : 'hidden';
 
-    if (map && isMapViewActive() && !inGuidedReveal && !fromMarker && state.mode !== 'moving') {
+    if (map && isMapViewActive() && !inGuidedReveal && !fromMarker) {
       map.panTo(coords[index], { animate: !reduceMotion() });
     }
-    $('close-sheet').focus();
-    updateGuide();
+    if (!rerender) $('close-sheet')?.focus();
+    updateUI();
   }
 
-  function closeSheet({ restoreFocus = true } = {}) {
+  function closeSheet({ restoreFocus = true, keepState = false } = {}) {
     const sheet = $('stop-sheet');
     if (!sheet || !sheet.classList.contains('open')) return;
     $('sheet-overlay').hidden = true;
-    sheet.classList.remove('open', 'tour-mode');
+    sheet.classList.remove('open', 'tour-mode', 'expanded');
     sheet.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    if (!keepState) state.sheetExpanded = false;
     if (restoreFocus && returnFocus && returnFocus.isConnected && typeof returnFocus.focus === 'function') {
       returnFocus.focus();
     }
-    updateGuide();
+    updateUI();
   }
 
   function showFinale() {
@@ -479,121 +465,153 @@
     const el = $('journey-finale');
     if (!el) return;
     el.hidden = false;
-    el.classList.add('show');
   }
-
   function closeFinale({ restoreFocus = true } = {}) {
     const el = $('journey-finale');
     if (!el || el.hidden) return;
-    el.classList.remove('show');
     el.hidden = true;
-    if (restoreFocus) {
-      const next = $('guide-next');
-      if (next && !next.disabled) next.focus();
-    }
+    if (restoreFocus) $('guide-next')?.focus?.();
+  }
+
+  function acknowledgeCompletion() {
+    if (state.mode !== 'completed' || state.completionAcknowledged) return;
+    state.completionAcknowledged = true;
+    sessionStorage.setItem('siViaggiamoCompletamentoConfermato', 'yes');
+    updateUI();
+  }
+
+  function updateUI() {
+    updateGuide();
+    renderProgress();
+    if (sheetIsOpen()) $('stop-sheet')?.classList.toggle('expanded', state.sheetExpanded);
   }
 
   function updateGuide() {
     const guide = $('journey-guide');
     if (!guide) return;
+    const next = $('guide-next');
+    const skip = $('guide-skip');
+    const title = $('guide-title');
+    const text = $('guide-text');
+    const label = $('guide-label');
+    const progress = $('guide-progress');
 
-    if (canExploreFreely()) {
-      guide.hidden = false;
-      guide.classList.remove('is-moving');
-      $('guide-label').textContent = `Viaggio completo · ${stops.length}/${stops.length}`;
-      $('guide-progress').innerHTML = stops.map(() => '<span class="done" aria-hidden="true"></span>').join('');
-      $('guide-title').textContent = state.mode === 'completed' ? 'Martina, il bello deve ancora cominciare!' : 'Esplora liberamente la mappa';
-      $('guide-text').textContent = state.mode === 'completed'
-        ? 'Hai scoperto tutte le tappe: ora il viaggio è tutto tuo. Puoi riaprire ogni cartolina o leggere la dedica finale.'
-        : 'Tocca i pin numerati o usa il diario delle tappe per tornare dove preferisci.';
-      $('guide-next').textContent = state.mode === 'completed' ? 'Esplora tutta la mappa' : 'Mostra tutto il percorso';
-      $('guide-next').disabled = false;
-      $('guide-skip').textContent = 'Rivivi la sorpresa ↺';
+    // Durante movimento mappa: nessun pannello invasivo.
+    if (state.mode === 'moving') {
+      guide.hidden = true;
+      guide.className = 'journey-guide';
       return;
     }
 
-    const sheetOpen = $('stop-sheet')?.classList.contains('open');
-    const showGuide = state.mode === 'idle' || state.mode === 'moving' || (state.mode === 'stop-revealed' && !sheetOpen);
-    guide.hidden = !showGuide;
-    guide.classList.toggle('is-moving', state.mode === 'moving');
-    $('guide-progress').innerHTML = stops.map((_, i) => `<span class="${i < state.revealed ? 'done' : ''}" aria-hidden="true"></span>`).join('');
-    $('guide-label').textContent = `La sorpresa di Martina · ${state.revealed}/${stops.length}`;
-    $('guide-skip').textContent = 'Esplora liberamente ×';
-    $('guide-next').disabled = state.mode === 'moving';
+    if (canExploreFreely()) {
+      const discovered = stops.length;
+      const compact = state.mode === 'free-exploration' || state.completionAcknowledged;
+      guide.hidden = false;
+      guide.className = 'journey-guide compact ' + (compact ? 'compact-ui' : 'celebrate');
+      label.textContent = `Viaggio · ${discovered}/${stops.length}`;
+      progress.innerHTML = stops.map(() => '<span class="done" aria-hidden="true"></span>').join('');
+      if (!compact) {
+        title.textContent = 'Viaggio svelato!';
+        text.textContent = 'Tutte le tappe sono state scoperte. Ora puoi esplorare la mappa in libertà.';
+        next.textContent = 'Continua';
+        next.disabled = false;
+        skip.textContent = 'Rivivi ↺';
+        skip.hidden = false;
+      } else {
+        title.textContent = 'Mappa libera';
+        text.textContent = 'Tocca un pin o apri il diario.';
+        next.textContent = 'Mostra tutto';
+        next.disabled = false;
+        skip.textContent = 'Rivivi ↺';
+        skip.hidden = false;
+      }
+      return;
+    }
 
-    if (state.mode === 'moving') {
-      $('guide-title').textContent = 'Stiamo viaggiando…';
-      $('guide-text').textContent = 'La mappa si sta spostando verso la prossima destinazione.';
-      $('guide-next').textContent = 'In viaggio…';
+    const sheetOpen = sheetIsOpen();
+    const show = state.mode === 'idle' || (state.mode === 'stop-revealed' && !sheetOpen);
+    guide.hidden = !show;
+    guide.className = 'journey-guide compact';
+    label.textContent = `Sorpresa · ${state.revealed}/${stops.length}`;
+    progress.innerHTML = stops.map((_, i) => `<span class="${i < state.revealed ? 'done' : ''}" aria-hidden="true"></span>`).join('');
+    skip.hidden = false;
+
+    if (state.mode === 'idle') {
+      title.textContent = 'Martina, pronta a partire?';
+      text.textContent = 'Scopri il viaggio una tappa alla volta.';
+      next.textContent = 'Scopri la prima tappa';
+      next.disabled = false;
+      skip.textContent = 'Esplora liberamente ×';
       return;
     }
 
     if (state.mode === 'stop-revealed') {
       const isLast = state.revealed >= stops.length;
-      $('guide-title').textContent = `${stops[state.activeStop]?.title || 'Tappa'} scoperta`;
-      $('guide-text').textContent = 'Quando vuoi, continua il viaggio con il pulsante qui sotto.';
-      $('guide-next').textContent = isLast ? 'Termina la scoperta' : 'Scopri la prossima tappa';
-      return;
+      title.textContent = `${stops[state.activeStop]?.title || 'Tappa'} scoperta`;
+      text.textContent = 'Continua quando vuoi.';
+      next.textContent = isLast ? 'Termina la scoperta' : 'Scopri la prossima tappa';
+      next.disabled = false;
+      skip.textContent = 'Esplora liberamente ×';
     }
-
-    $('guide-title').textContent = 'Martina, pronta a partire?';
-    $('guide-text').textContent = 'Premi il pulsante per scoprire la prima tappa: la mappa ti accompagnerà nel viaggio.';
-    $('guide-next').textContent = 'Scopri la prima tappa';
   }
 
   function startTour() {
     if (!stops.length) return;
     ensureMap();
     if (!map) return;
+    clearCompletionTimer();
     cancelTravel();
     closeSheet({ restoreFocus: false });
     closeFinale({ restoreFocus: false });
     state.revealed = 0;
     state.activeStop = 0;
+    state.sheetExpanded = false;
+    state.completionAcknowledged = false;
     state.finalShown = false;
     sessionStorage.removeItem('siViaggiamoFinaleMostrata');
+    sessionStorage.removeItem('siViaggiamoCompletamentoConfermato');
     setMode('idle');
     renderProgress();
     map.stop();
     map.setView([53.5, -8.1], 6.6, { animate: false });
     refreshMap();
-    updateGuide();
-    updateTimeline();
+    updateUI();
   }
 
-  function finishTour() {
-    const fromReveal = state.mode === 'stop-revealed' || state.mode === 'moving';
+  function finishTour({ fromReveal = false } = {}) {
+    clearCompletionTimer();
     state.revealed = stops.length;
+    state.completionAcknowledged = false;
     sessionStorage.setItem('siViaggiamoIntroduzioneCompletata', 'yes');
+    sessionStorage.setItem('siViaggiamoCompletamentoConfermato', 'no');
     renderProgress();
     setMode('completed');
     fitRoute(true);
     if (fromReveal) showFinale();
+    // breve conferma, poi UI compatta
+    if (!reduceMotion()) {
+      completionTimer = window.setTimeout(() => { acknowledgeCompletion(); }, 2200);
+    }
   }
 
   async function advanceTour() {
     if (!map || state.mode === 'moving') return;
 
-    if (canExploreFreely()) {
-      if (state.mode === 'completed') setMode('free-exploration');
+    if (state.mode === 'completed') {
+      if (!state.completionAcknowledged) { acknowledgeCompletion(); return; }
+      setMode('free-exploration');
       fitRoute(true);
       return;
     }
+    if (state.mode === 'free-exploration') { fitRoute(true); return; }
 
     if (state.mode === 'stop-revealed') {
       closeSheet({ restoreFocus: false });
-      if (state.revealed >= stops.length) {
-        finishTour();
-        return;
-      }
-      // si continua con la tappa successiva
+      if (state.revealed >= stops.length) { finishTour({ fromReveal: true }); return; }
     }
 
     if (state.mode !== 'idle' && state.mode !== 'stop-revealed') return;
-    if (state.revealed >= stops.length) {
-      finishTour();
-      return;
-    }
+    if (state.revealed >= stops.length) { finishTour({ fromReveal: false }); return; }
 
     const index = state.revealed;
     state.revealed += 1;
@@ -605,102 +623,81 @@
 
     const ok = await animateJourneyTo(index);
     if (!ok) {
-      // viaggio interrotto: mantieni stato coerente
-      if (state.mode === 'moving') setMode(state.revealed >= stops.length ? 'completed' : 'idle');
+      if (state.mode === 'moving') setMode(state.revealed >= stops.length ? 'completed' : 'stop-revealed');
       return;
     }
-
     renderProgress();
     setMode('stop-revealed');
     openSheet(index, { fromMarker: false });
   }
 
-  function skipOrRestart() {
-    if (canExploreFreely()) {
-      startTour();
-      return;
-    }
+  function skipToExplore() {
     cancelTravel();
+    clearCompletionTimer();
     closeSheet({ restoreFocus: false });
     closeFinale({ restoreFocus: false });
     state.revealed = stops.length;
+    state.completionAcknowledged = true;
     state.finalShown = true;
     sessionStorage.setItem('siViaggiamoIntroduzioneCompletata', 'yes');
+    sessionStorage.setItem('siViaggiamoCompletamentoConfermato', 'yes');
     sessionStorage.setItem('siViaggiamoFinaleMostrata', 'yes');
     renderProgress();
     setMode('free-exploration');
     fitRoute(true);
   }
 
-  // Event wiring
+  // Wiring
   document.querySelectorAll('[data-nav]').forEach((el) => {
-    el.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      goto(el.dataset.nav);
-    });
+    el.addEventListener('click', (ev) => { ev.preventDefault(); goto(el.dataset.nav); });
   });
 
   $('start-btn')?.addEventListener('click', () => {
     goto('map-view');
     if (!sessionStorage.getItem('siViaggiamoIntroduzioneCompletata')) startTour();
-    else {
-      state.revealed = stops.length;
-      renderProgress();
-      setMode('free-exploration');
-      fitRoute(true);
-    }
+    else { skipToExplore(); }
   });
 
-  $('view-stops')?.addEventListener('click', () => goto('stops'));
   $('fit-map')?.addEventListener('click', () => fitRoute(true));
-  $('restart-tour')?.addEventListener('click', () => {
-    goto('map-view');
-    startTour();
-  });
 
   $('guide-next')?.addEventListener('click', () => {
-    if (state.mode === 'completed') {
-      setMode('free-exploration');
-      fitRoute(true);
-      return;
-    }
-    if (state.mode === 'free-exploration') {
-      fitRoute(true);
-      return;
-    }
+    if (state.mode === 'completed' && !state.completionAcknowledged) { acknowledgeCompletion(); return; }
     advanceTour();
   });
-  $('guide-skip')?.addEventListener('click', skipOrRestart);
+  $('guide-skip')?.addEventListener('click', () => {
+    if (canExploreFreely()) startTour();
+    else skipToExplore();
+  });
 
   $('close-sheet')?.addEventListener('click', () => closeSheet());
   $('sheet-overlay')?.addEventListener('click', () => closeSheet());
 
   $('finale-close')?.addEventListener('click', () => closeFinale());
-  $('finale-map')?.addEventListener('click', () => {
-    closeFinale({ restoreFocus: false });
-    setMode('free-exploration');
-    fitRoute(true);
-  });
-  $('finale-message')?.addEventListener('click', () => {
-    closeFinale({ restoreFocus: false });
-    goto('message');
-  });
+  $('finale-map')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); setMode('free-exploration'); fitRoute(true); });
+  $('finale-message')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); goto('message'); });
 
   document.addEventListener('keydown', (ev) => {
-    const sheetOpen = $('stop-sheet')?.classList.contains('open');
+    const open = sheetIsOpen();
     const finaleOpen = $('journey-finale') && !$('journey-finale').hidden;
     if (ev.key === 'Escape') {
-      if (sheetOpen) closeSheet();
+      if (open) closeSheet();
       else if (finaleOpen) closeFinale();
+      return;
     }
-    if (sheetOpen && canExploreFreely()) {
-      if (ev.key === 'ArrowRight') openSheet((state.activeStop + 1) % stops.length);
-      if (ev.key === 'ArrowLeft') openSheet((state.activeStop - 1 + stops.length) % stops.length);
+    if (open && canExploreFreely() && !state.mode.includes('reveal')) {
+      if (ev.key === 'ArrowRight') { state.sheetExpanded = false; openSheet((state.activeStop + 1) % stops.length, { rerender: true }); }
+      if (ev.key === 'ArrowLeft') { state.sheetExpanded = false; openSheet((state.activeStop - 1 + stops.length) % stops.length, { rerender: true }); }
     }
   });
 
-  buildTimeline();
+  // init
+  $('journey-finale')?.setAttribute('aria-hidden', 'true');
+  updateTimeline();
+  if (sessionStorage.getItem('siViaggiamoIntroduzioneCompletata') === 'yes') {
+    state.revealed = stops.length;
+  }
   if (location.hash === '#map' || location.hash === '#map-view') goto('map-view');
   else if (location.hash === '#stops') goto('stops');
   else if (location.hash === '#message') goto('message');
+  else updateUI();
 })();
