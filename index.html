@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f8f4e9" />
+  <meta name="description" content="A little Irish adventure, made with love." />
+  <title>Your Irish Adventure ♡</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,20,1;9..144,700,20,1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzxgSgJgGmL3XQ2w2bNQ9c8C+g=" crossorigin="" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a href="#home" class="brand" data-nav="home" aria-label="Go to home"><span class="brand-clover">✤</span> irish adventure<span class="brand-dot">.</span></a>
+      <div class="friends" aria-label="Travelling friends">
+        <span class="avatar avatar-a" title="Traveller one">☺</span><span class="avatar avatar-b" title="Traveller two">☺</span>
+      </div>
+    </header>
+    <main>
+      <section id="home" class="view active home-view" aria-labelledby="welcome-title">
+        <div class="eyebrow"><span class="sparkle">✳</span> A LITTLE GRADUATION SURPRISE <span class="sparkle">✳</span></div>
+        <h1 id="welcome-title">Pack your bags,<br/><em>girl!</em> <span class="title-star">✦</span></h1>
+        <p class="intro">Some adventures are too good to keep a secret. And this one's made just for you.</p>
+        <div class="hero-art" role="img" aria-label="Illustrated Irish hills, a winding road and a happy sun">
+          <div class="sun">☀</div><div class="cloud cloud-one"></div><div class="cloud cloud-two"></div>
+          <div class="hill hill-back"></div><div class="hill hill-front"></div><div class="road"></div>
+          <div class="hero-label">IRELAND IS CALLING <span>♥</span></div>
+          <span class="floating-clover">☘</span>
+        </div>
+        <div class="travelers"><span class="avatar avatar-a">☺</span><span class="heart-between">♥</span><span class="avatar avatar-b">☺</span></div>
+        <p class="home-note">Two girls. One island. So many stories waiting to happen.</p>
+        <button class="primary-btn" id="start-btn">Let's go explore <span aria-hidden="true">↗</span></button>
+        <p class="tiny-note">made with lots of love ♡</p>
+      </section>
+      <section id="map-view" class="view map-view" aria-labelledby="map-title">
+        <div class="section-heading"><div><p class="eyebrow left">YOUR ADVENTURE AWAITS</p><h2 id="map-title">Explore <em>Ireland</em> ☘</h2></div><span class="heading-doodle">✳</span></div>
+        <p class="section-desc">Tap a pin, find a surprise, and explore your route!</p>
+        <div class="map-frame"><div id="map" role="application" aria-label="Interactive map of Ireland with trip stops"></div>
+          <button class="map-reset" id="fit-map" aria-label="Show whole route" title="Show whole route">⌖</button>
+          <div class="map-help">✦ tap a numbered pin!</div>
+        </div>
+        <div class="map-footer"><span>✦ Your little road trip</span><button id="view-stops" class="text-btn">See all stops →</button></div>
+      </section>
+      <section id="stops" class="view stops-view" aria-labelledby="stops-title">
+        <p class="eyebrow left">THE ADVENTURE PLAN</p><h2 id="stops-title">Our little <em>road trip!</em></h2>
+        <p class="section-desc">Every stop has a story to tell. Let's make some memories.</p>
+        <div id="stops-list" class="timeline"></div>
+        <div class="postcard"><span>✳</span><strong>Memories loading...</strong><p>The best part? You'll make them together.</p></div>
+      </section>
+      <section id="message" class="view message-view" aria-labelledby="message-title">
+        <div class="message-star">♡</div><p class="eyebrow">ONE LAST LITTLE THING</p><h2 id="message-title">Before you <em>go...</em></h2>
+        <p class="message-lead">The best adventures are the ones you share.</p>
+        <div class="travelers big"><span class="avatar avatar-a">☺</span><span class="heart-between">♥</span><span class="avatar avatar-b">☺</span></div>
+        <div class="letter"><span class="letter-tape"></span><p class="letter-title">Dear graduate,</p><p>This space is waiting for a little message from the people who love you. Here’s to adventures, laughter, and all the memories still to come!</p><p class="letter-sign">With love, ♡</p></div>
+        <div class="last-line">Your adventure starts now! <span>☘</span></div>
+      </section>
+    </main>
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button class="nav-btn selected" data-nav="home" aria-current="page"><span class="nav-icon">⌂</span><span>Home</span></button>
+      <button class="nav-btn" data-nav="map-view"><span class="nav-icon">⌖</span><span>Map</span></button>
+      <button class="nav-btn" data-nav="stops"><span class="nav-icon">⋯</span><span>Stops</span></button>
+      <button class="nav-btn" data-nav="message"><span class="nav-icon">♡</span><span>Message</span></button>
+    </nav>
+  </div>
+  <div class="sheet-overlay" id="sheet-overlay" hidden></div>
+  <aside class="stop-sheet" id="stop-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-hidden="true">
+    <div class="sheet-handle"></div><button class="sheet-close" id="close-sheet" aria-label="Close destination">×</button>
+    <div id="sheet-content"></div>
+  </aside>
+  <div class="reveal-overlay" id="reveal-overlay" hidden aria-hidden="true"><div class="reveal-card"><div class="reveal-icon">☘</div><span class="eyebrow">DESTINATION UNLOCKED</span><h2 id="reveal-name">Your adventure!</h2><p id="reveal-progress">A little surprise for you ♡</p></div></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/destinations.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
