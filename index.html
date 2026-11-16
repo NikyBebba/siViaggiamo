@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,20,1;9..144,700,20,1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="css/style.css?v=1.3" />
+  <link rel="stylesheet" href="css/style.css?v=1.4" />
 </head>
 <body>
   <div class="shell">
@@ -30,6 +30,8 @@
           <div class="hill hill-back"></div><div class="hill hill-front"></div><div class="road"></div>
           <div class="hero-label">L’IRLANDA CI ASPETTA <span>♥</span></div>
           <span class="floating-clover">☘</span>
+          <span class="hero-sparkle hero-sparkle-a" aria-hidden="true">✦</span>
+          <span class="hero-sparkle hero-sparkle-b" aria-hidden="true">✳</span>
         </div>
         <div class="travelers"><span class="avatar avatar-a">☺</span><span class="heart-between">♥</span><span class="avatar avatar-b">☺</span></div>
         <p class="home-note">Due ragazze, un’isola e un sacco di storie ancora da vivere.</p>
@@ -47,8 +49,9 @@
         <p id="map-status" class="map-status" role="status" aria-live="polite" hidden></p>
       </section>
       <section id="stops" class="view stops-view" aria-labelledby="stops-title">
-        <p class="eyebrow left">IL PIANO DELL’AVVENTURA</p><h2 id="stops-title">Il nostro <em>viaggio!</em></h2>
-        <p class="section-desc">Ogni tappa nasconde una storia. Pronta a scoprirle?</p>
+        <p class="eyebrow left">IL PIANO DELL’AVVENTURA</p><h2 id="stops-title">Il nostro <em>diario di viaggio!</em></h2>
+        <p class="section-desc">Ogni tappa nasconde una storia. Scoprile sulla mappa e ritrovale qui, come in un piccolo diario.</p>
+        <div id="trip-progress" class="trip-progress" aria-label="Progresso del viaggio"></div>
         <div id="stops-list" class="timeline"></div>
         <div class="postcard"><span>✳</span><strong>Ricordi in arrivo...</strong><p>La parte migliore? Li costruirete insieme.</p></div>
       </section>
@@ -80,7 +83,20 @@
     <button class="guide-next" type="button" id="guide-next">Scopri la prima tappa</button>
   </section>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <div class="journey-finale" id="journey-finale" hidden aria-live="polite">
+    <div class="journey-finale-card" role="dialog" aria-modal="false" aria-labelledby="finale-title">
+      <button type="button" class="finale-close" id="finale-close" aria-label="Chiudi messaggio finale">×</button>
+      <div class="finale-sparkles" aria-hidden="true"><span>✦</span><span>☘</span><span>✳</span><span>♡</span><span>✦</span></div>
+      <p class="eyebrow">SORPRESA COMPLETATA</p>
+      <h3 id="finale-title">Martina, il bello deve ancora cominciare!</h3>
+      <p>Hai scoperto tutte le tappe del viaggio. Ora puoi esplorare la mappa, rileggere le cartoline e aprire la dedica quando vuoi.</p>
+      <div class="finale-actions">
+        <button type="button" class="primary-btn finale-btn" id="finale-map">Torna alla mappa completa</button>
+        <button type="button" class="text-btn finale-link" id="finale-message">Leggi la dedica →</button>
+      </div>
+    </div>
+  </div>
   <script src="js/destinations.js"></script>
-  <script src="js/app.js?v=1.3"></script>
+  <script src="js/app.js?v=1.4"></script>
 </body>
 </html>
