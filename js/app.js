@@ -780,17 +780,7 @@
     renderProgress({ animateNewSegment: index > 0 });
     updateUI();
 
-    const tokenAtStart = travelToken;
     const ok = await animateJourneyTo(index);
-    if (tokenAtStart !== travelToken) {
-      // interrotto/annullato (es. cambio vista o nuova azione): evita stato bloccato in "moving"
-      if (state.mode === 'moving') {
-        setResumableStateAfterInterruption();
-        saveJourneyState();
-        updateUI();
-      }
-      return;
-    }
     if (!ok || !isMapViewActive()) {
       setResumableStateAfterInterruption();
       saveJourneyState();
