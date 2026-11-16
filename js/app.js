@@ -44,8 +44,10 @@
       ensureMap();
       refreshMap();
       // Quando la mappa diventa visibile, sincronizziamo le dimensioni prima di animarla.
-      setTimeout(refreshMap, 120);
-      setTimeout(refreshMap, 420);
+      setTimeout(() => {
+        refreshMap();
+        if (!tourActive) fitRoute(false);
+      }, 180);
     }
   }
   document.querySelectorAll('[data-nav]').forEach(el => el.addEventListener('click', ev => {
@@ -65,8 +67,8 @@
       $('map').innerHTML = '<p style="padding:24px">Impossibile caricare la mappa. Controlla la connessione a Internet.</p>';
       return;
     }
-    map = L.map('map', {zoomControl: true, scrollWheelZoom: false, zoomSnap: 0.5, preferCanvas: true});
-    map.setView([53.4, -8.1], 6.5, {animate:false});
+    map = L.map('map', {zoomControl: true, scrollWheelZoom: false, zoomSnap: 1, preferCanvas: true, fadeAnimation: false});
+    map.setView([53.4, -8.1], 7, {animate:false});
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
@@ -84,7 +86,17 @@
     });
     renderMapProgress(stops.length);
     fitRoute(false);
-    if ('ResizeObserver' in window) new ResizeObserver(refreshMap).observe($('map'));
+    if ('ResizeObserver' in window) {
+      let previous = { width: 0, height: 0 };
+      new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0 &&
+            (Math.abs(width - previous.width) > 2 || Math.abs(height - previous.height) > 2)) {
+          previous = { width, height };
+          refreshMap();
+        }
+      }).observe($('map'));
+    }
     window.addEventListener('resize', refreshMap);
   }
   function renderMapProgress(count) {
@@ -139,17 +151,18 @@
       advanceTour();
     });
     returnFocus = document.activeElement;
-    $('sheet-overlay').hidden = false;
+    $('sheet-overlay').hidden = tourActive;
+    $('stop-sheet').classList.toggle('tour-sheet', tourActive);
     $('stop-sheet').classList.add('open');
     $('stop-sheet').setAttribute('aria-hidden','false');
-    document.body.style.overflow = 'hidden';
-    if (map && $('map-view').classList.contains('active') && !moving) map.panTo(coords[activeStop], {animate:!reduceMotion});
+    document.body.style.overflow = tourActive ? '' : 'hidden';
+    if (map && $('map-view').classList.contains('active') && !moving && !tourActive) map.panTo(coords[activeStop], {animate:!reduceMotion});
     $('close-sheet').focus();
   }
   function closeSheet() {
     if (!$('stop-sheet').classList.contains('open')) return;
     $('sheet-overlay').hidden = true;
-    $('stop-sheet').classList.remove('open');
+    $('stop-sheet').classList.remove('open', 'tour-sheet');
     $('stop-sheet').setAttribute('aria-hidden','true');
     document.body.style.overflow = '';
     if (returnFocus && returnFocus.isConnected && typeof returnFocus.focus === 'function') returnFocus.focus();
@@ -193,7 +206,7 @@
     revealed = 0;
     moving = false;
     renderMapProgress(0);
-    map.setView([53.5,-8.1], 6.5, {animate:false});
+    map.setView([53.5,-8.1], 7, {animate:false});
     refreshMap();
     updateGuide();
   }
@@ -217,12 +230,19 @@
     const destination = coords[index];
     // Nessun timeout per passare alla tappa successiva: solo il click di Martina.
     // moveend segnala esclusivamente la conclusione dell'animazione geografica.
-    map.once('moveend', () => {
+    map.stop();
+    const arrived = () => {
       moving = false;
       updateGuide();
       openSheet(index);
-    });
-    map.flyTo(destination, 9, {animate:!reduceMotion, duration:1.35, easeLinearity:0.28});
+    };
+    if (reduceMotion) {
+      map.setView(destination, 9, {animate: false});
+      arrived();
+    } else {
+      map.once('moveend', arrived);
+      map.flyTo(destination, 9, {animate: true, duration: 1.6, easeLinearity: 0.3});
+    }
   }
   $('guide-next').addEventListener('click', advanceTour);
   $('guide-skip').addEventListener('click', () => {closeSheet();finishTour();});

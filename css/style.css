@@ -20,3 +20,41 @@
 .sheet-tour-next{margin:20px 0 12px;background:#457d58}
 @media(min-width:760px){.journey-guide{bottom:108px}}
 @media(max-width:540px){.map-frame{height: min(62dvh,570px);min-height:340px}.map-footer{gap:8px;align-items:flex-start}.map-footer-actions{gap:8px;flex-direction:column;align-items:flex-end}.journey-guide{bottom:calc(80px + env(safe-area-inset-bottom))}.stop-sheet{max-height:80dvh}}
+
+/* siViaggiamo v1.2 — corregge l'animazione del contenitore Leaflet e compatta le schede */
+.map-view.active { animation: none; }
+.map-frame .leaflet-tile-pane img { max-width: none !important; }
+.stop-sheet.tour-sheet {
+  left: auto; right: 18px; bottom: 106px;
+  transform: translateX(calc(100% + 28px));
+  width: min(370px, 35vw);
+  max-height: min(66dvh, 640px);
+  border-radius: 22px;
+  box-shadow: 0 14px 48px #15352f55;
+}
+.stop-sheet.tour-sheet.open { transform: translateX(0); }
+.stop-sheet.tour-sheet .sheet-img { height: 105px; }
+.stop-sheet.tour-sheet .sheet-body { padding: 15px 20px; }
+.stop-sheet.tour-sheet .sheet-body h3 { font-size: 28px; }
+.stop-sheet.tour-sheet .description { font-size: 13px; line-height: 1.5; }
+.stop-sheet.tour-sheet .dedication { margin: 12px 0; padding: 12px; font-size: 12px; }
+.stop-sheet.tour-sheet .sheet-actions { gap: 6px; }
+.stop-sheet.tour-sheet .sheet-actions a,
+.stop-sheet.tour-sheet .sheet-actions button { padding: 8px; font-size: 11px; }
+.stop-sheet.tour-sheet .sheet-tour-next { margin: 12px 0 8px; }
+@media (max-width: 759px) {
+  .stop-sheet.tour-sheet {
+    left: 0; right: 0; bottom: 0;
+    transform: translateY(110%);
+    width: 100%; max-height: 48dvh;
+    border-radius: 22px 22px 0 0;
+  }
+  .stop-sheet.tour-sheet.open { transform: translateY(0); }
+  .stop-sheet.tour-sheet .sheet-img { height: 75px; }
+  .stop-sheet.tour-sheet .sheet-body { padding: 12px 18px 18px; }
+  .stop-sheet.tour-sheet .sheet-body h3 { font-size: 25px; margin: 6px 0 2px; }
+  .stop-sheet.tour-sheet .region { margin-bottom: 8px; }
+  .stop-sheet.tour-sheet .description { font-size: 12px; }
+  .stop-sheet.tour-sheet .dedication { margin: 8px 0; padding: 9px; }
+  .stop-sheet.tour-sheet .sheet-tour-next { position: sticky; bottom: 0; z-index: 2; }
+}
