@@ -214,6 +214,13 @@
     });
     window.scrollTo({ top: 0, behavior: 'instant' });
 
+    if (id !== 'map-view') {
+      const guide = $('journey-guide');
+      if (guide) guide.hidden = true;
+      // sicurezza: nessuna cartolina mappa deve restare aperta fuori dalla Mappa
+      if (!fromMap) closeSheet({ restoreFocus: false, keepState: true });
+    }
+
     if (id === 'map-view') {
       ensureMap();
       refreshMap();
@@ -898,6 +905,8 @@
     const citySel = $('guide-city');
     const results = $('guide-results');
     if (!results) return;
+    // difensivo: la guida non deve mai mostrare overlay della mappa
+    $('journey-guide') && ($('journey-guide').hidden = true);
     if (catWrap) {
       const cats = [{ id: 'all', label: 'Tutte', icon: '✳' }, ...(guideData.categories || [])];
       catWrap.innerHTML = cats.map((c) => {
