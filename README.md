@@ -1,61 +1,61 @@
-# Your Irish Adventure ☘
+# siViaggiamo ☘ — il regalo di Martina
 
-A playful graduation-trip gift website: **HTML + CSS + vanilla JavaScript**, with an interactive Ireland map, four demo destinations, a one-time introductory reveal, timeline, messages and temporary avatars.
+Mini sito di viaggio per la laurea di Martina, realizzato con **HTML, CSS e JavaScript puro**. Design giocoso ispirato a un diario di viaggio, mappa interattiva dell'Irlanda, quattro tappe dimostrative, dediche e due avatar provvisori.
 
-## Run locally
+## Sorpresa guidata, a ritmo di Martina
 
-The project has no build step. You can open `index.html` directly, but a local server is recommended:
+1. Martina apre il sito tramite QR code e preme **Scopri la sorpresa**.
+2. Sulla mappa compare la guida con il pulsante **Scopri la prima tappa**.
+3. A ogni clic, la mappa **si sposta e zooma verso la tappa successiva**, mostra il nuovo pin e apre la scheda della destinazione.
+4. Il viaggio **non avanza mai automaticamente**. Martina può leggere, chiudere la scheda o premere **Prossima tappa** quando vuole.
+5. Alla fine si sblocca tutta la mappa e può esplorarla liberamente. È possibile ripetere la presentazione con **Rivivi la sorpresa**.
+
+Il completamento della prima scoperta viene ricordato soltanto per la sessione del browser. Non ci sono account né database.
+
+## Avvio locale
+
+Apri `index.html` nel browser oppure, dalla cartella del progetto:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000.
+Poi visita `http://localhost:8000`.
 
-## Publish using GitHub Pages
+## Pubblicazione su GitHub Pages
 
-1. Create a public GitHub repository named `your-irish-adventure`.
-2. Upload all files and folders **preserving their structure**.
-3. In the repository select **Settings → Pages**.
-4. Under **Build and deployment**, select **Deploy from a branch** → `main` → `/(root)` and save.
-5. Visit `https://YOUR-USERNAME.github.io/your-irish-adventure/` when Pages finishes publishing.
-6. Generate a QR code pointing to the final published URL only after confirming the URL works on a phone.
+Repository: https://github.com/NikyBebba/siViaggiamo
 
-No database and no credentials are required.
+Carica il contenuto della cartella nella **radice del repository**, non in una sottocartella aggiuntiva. In GitHub seleziona **Settings → Pages → Deploy from a branch → main → /(root)**.
 
-## Replace placeholder content
+Sito previsto: https://nikybebba.github.io/siViaggiamo/
 
-Edit only `js/destinations.js` to change the four demo stops:
+Dopo il caricamento, ricarica la pagina senza cache per vedere i nuovi file.
 
-- `title`, `region`, `lat`, `lng`: geographic position and label.
-- `description`, `dedication`: content of the destination bottom sheet.
-- `image`: use a local path such as `assets/images/galway.jpg` (initially `null`, which shows a placeholder).
-- `day`: can be added later when actual dates are known.
-- Add/remove objects to change the number of stops. Order in the array is itinerary order.
+## Personalizzazione
 
-For the girls' photos, add images at `assets/images/girl-1.jpg` and `girl-2.jpg` and update the `travelers` `image` values in the same JS file. Their circular shapes already adapt to images.
+Modifica `js/destinations.js`:
 
-Edit the final dedication directly in `index.html`, in the `section id="message"`.
+- `travelers[].name` e `travelers[].image`: nomi e foto delle due ragazze; con `image: null` restano due cerchi con icone.
+- `destinations`: ordine delle tappe, nomi, coordinate, descrizioni, dediche, colori e immagini.
+- `image: null` nelle tappe significa che si mostra il segnaposto **Foto in arrivo**.
+- La dedica finale è in `index.html`, nella sezione `id="message"`.
 
-## Map implementation
+**Importante:** Dublino, Galway, Cliffs of Moher e Killarney sono tappe *dimostrative*. Non rappresentano un itinerario confermato. La linea tratteggiata collega i luoghi nell'ordine del file: **non è una strada calcolata**.
 
-Uses **Leaflet 1.9.4** from a public CDN and OpenStreetMap raster tiles. Connectivity is required; this is not an offline map.
+## Mappa e compatibilità
 
-The **dotted line is an illustrative, point-to-point connection**, NOT a road route or directions. For actual road geometry a routing provider or a validated GPX/GeoJSON itinerary would be needed.
+Usa Leaflet 1.9.4 e tessere OpenStreetMap, con attribuzione. È necessaria una connessione internet. Il codice forza il ricalcolo delle dimensioni quando la vista mappa viene mostrata, per evitare tessere disallineate. Le mappe OSM rispettano la policy https://operations.osmfoundation.org/policies/tiles/ .
 
-The official OpenStreetMap tile servers are provided on a best-effort basis with usage rules: https://operations.osmfoundation.org/policies/tiles/ . The current configuration is intended for a small, low-traffic personal website and keeps attribution visible. If traffic grows or a different cartographic style is wanted, switch to a tile provider with suitable terms.
+Per fotografie e dediche reali, raccogliere il consenso delle persone interessate prima della pubblicazione pubblica.
 
-## Acceptance checklist
+## Test rapidi
 
-- [ ] Intro appears on first click of “Let's go explore” per tab session.
-- [ ] After intro, all destinations are visible and map can be zoomed/panned.
-- [ ] Each map marker opens the correct bottom sheet.
-- [ ] Bottom sheet offers previous/next, external maps and close.
-- [ ] Timeline contains the same stops in the same order.
-- [ ] Bottom navigation switches among four sections.
-- [ ] All photo placeholders can be replaced without editing the CSS.
-- [ ] Works on a real smartphone via GitHub Pages.
-
-## Notes
-
-All names, text and positions are demonstration data until confirmed by the gift organisers. Do not publish private information or photos without approval from the people concerned.
+- [ ] Tutte le pagine sono in italiano; nome **siViaggiamo** e festeggiata **Martina**.
+- [ ] Dopo **Scopri la sorpresa**, la guida resta ferma finché Martina non preme **Scopri la prima tappa**.
+- [ ] Ogni clic sposta la mappa sulla tappa successiva, senza avanzamenti temporizzati.
+- [ ] Scheda, pulsanti, chiusura e riapertura della guida funzionano.
+- [ ] Alla fine sono visibili tutti i pin e la linea tratteggiata.
+- [ ] **Rivivi la sorpresa** ricomincia dall'inizio.
+- [ ] La mappa si carica senza tasselli separati su smartphone e desktop.
+- [ ] La navigazione in basso resta accessibile.

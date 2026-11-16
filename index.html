@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f8f4e9" />
-  <meta name="description" content="A little Irish adventure, made with love." />
-  <title>Your Irish Adventure ♡</title>
+  <meta name="description" content="Un viaggio in Irlanda tutto da scoprire, pensato per Martina." />
+  <title>siViaggiamo — La sorpresa di Martina ☘</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,20,1;9..144,700,20,1&display=swap" rel="stylesheet" />
@@ -15,63 +15,69 @@
 <body>
   <div class="shell">
     <header class="topbar">
-      <a href="#home" class="brand" data-nav="home" aria-label="Go to home"><span class="brand-clover">✤</span> irish adventure<span class="brand-dot">.</span></a>
-      <div class="friends" aria-label="Travelling friends">
-        <span class="avatar avatar-a" title="Traveller one">☺</span><span class="avatar avatar-b" title="Traveller two">☺</span>
+      <a href="#home" class="brand" data-nav="home" aria-label="Torna alla home"><span class="brand-clover">✤</span> siViaggiamo<span class="brand-dot">.</span></a>
+      <div class="friends" aria-label="Le due viaggiatrici">
+        <span class="avatar avatar-a" title="Prima viaggiatrice">☺</span><span class="avatar avatar-b" title="Seconda viaggiatrice">☺</span>
       </div>
     </header>
     <main>
       <section id="home" class="view active home-view" aria-labelledby="welcome-title">
-        <div class="eyebrow"><span class="sparkle">✳</span> A LITTLE GRADUATION SURPRISE <span class="sparkle">✳</span></div>
-        <h1 id="welcome-title">Pack your bags,<br/><em>girl!</em> <span class="title-star">✦</span></h1>
-        <p class="intro">Some adventures are too good to keep a secret. And this one's made just for you.</p>
-        <div class="hero-art" role="img" aria-label="Illustrated Irish hills, a winding road and a happy sun">
+        <div class="eyebrow"><span class="sparkle">✳</span> UNA SORPRESA PER LA TUA LAUREA <span class="sparkle">✳</span></div>
+        <h1 id="welcome-title">Martina, prepara<br/><em>la valigia!</em> <span class="title-star">✦</span></h1>
+        <p class="intro">Ci sono sorprese troppo belle per restare segrete. Questa è tutta per te!</p>
+        <div class="hero-art" role="img" aria-label="Colline irlandesi illustrate, strada e sole sorridente">
           <div class="sun">☀</div><div class="cloud cloud-one"></div><div class="cloud cloud-two"></div>
           <div class="hill hill-back"></div><div class="hill hill-front"></div><div class="road"></div>
-          <div class="hero-label">IRELAND IS CALLING <span>♥</span></div>
+          <div class="hero-label">L’IRLANDA CI ASPETTA <span>♥</span></div>
           <span class="floating-clover">☘</span>
         </div>
         <div class="travelers"><span class="avatar avatar-a">☺</span><span class="heart-between">♥</span><span class="avatar avatar-b">☺</span></div>
-        <p class="home-note">Two girls. One island. So many stories waiting to happen.</p>
-        <button class="primary-btn" id="start-btn">Let's go explore <span aria-hidden="true">↗</span></button>
-        <p class="tiny-note">made with lots of love ♡</p>
+        <p class="home-note">Due ragazze, un’isola e un sacco di storie ancora da vivere.</p>
+        <button class="primary-btn" id="start-btn">Scopri la sorpresa <span aria-hidden="true">↗</span></button>
+        <p class="tiny-note">fatto con tanto amore ♡</p>
       </section>
       <section id="map-view" class="view map-view" aria-labelledby="map-title">
-        <div class="section-heading"><div><p class="eyebrow left">YOUR ADVENTURE AWAITS</p><h2 id="map-title">Explore <em>Ireland</em> ☘</h2></div><span class="heading-doodle">✳</span></div>
-        <p class="section-desc">Tap a pin, find a surprise, and explore your route!</p>
-        <div class="map-frame"><div id="map" role="application" aria-label="Interactive map of Ireland with trip stops"></div>
-          <button class="map-reset" id="fit-map" aria-label="Show whole route" title="Show whole route">⌖</button>
-          <div class="map-help">✦ tap a numbered pin!</div>
+        <div class="section-heading"><div><p class="eyebrow left">LA TUA AVVENTURA TI ASPETTA</p><h2 id="map-title">Alla scoperta dell’<em>Irlanda</em> ☘</h2></div><span class="heading-doodle">✳</span></div>
+        <p class="section-desc">Tocca una tappa per scoprire cosa ti aspetta!</p>
+        <div class="map-frame"><div id="map" role="application" aria-label="Mappa interattiva delle tappe in Irlanda"></div>
+          <button class="map-reset" id="fit-map" aria-label="Mostra tutto il percorso" title="Mostra tutto il percorso">⌖</button>
+          <div class="map-help">✦ Tocca un pin numerato!</div>
         </div>
-        <div class="map-footer"><span>✦ Your little road trip</span><button id="view-stops" class="text-btn">See all stops →</button></div>
+        <div class="map-footer"><span>✦ La nostra avventura</span><div class="map-footer-actions"><button id="restart-tour" class="text-btn" type="button">Rivivi la sorpresa ↺</button><button id="view-stops" class="text-btn" type="button">Tutte le tappe →</button></div></div>
       </section>
       <section id="stops" class="view stops-view" aria-labelledby="stops-title">
-        <p class="eyebrow left">THE ADVENTURE PLAN</p><h2 id="stops-title">Our little <em>road trip!</em></h2>
-        <p class="section-desc">Every stop has a story to tell. Let's make some memories.</p>
+        <p class="eyebrow left">IL PIANO DELL’AVVENTURA</p><h2 id="stops-title">Il nostro <em>viaggio!</em></h2>
+        <p class="section-desc">Ogni tappa nasconde una storia. Pronta a scoprirle?</p>
         <div id="stops-list" class="timeline"></div>
-        <div class="postcard"><span>✳</span><strong>Memories loading...</strong><p>The best part? You'll make them together.</p></div>
+        <div class="postcard"><span>✳</span><strong>Ricordi in arrivo...</strong><p>La parte migliore? Li costruirete insieme.</p></div>
       </section>
       <section id="message" class="view message-view" aria-labelledby="message-title">
-        <div class="message-star">♡</div><p class="eyebrow">ONE LAST LITTLE THING</p><h2 id="message-title">Before you <em>go...</em></h2>
-        <p class="message-lead">The best adventures are the ones you share.</p>
+        <div class="message-star">♡</div><p class="eyebrow">UN’ULTIMA PICCOLA COSA</p><h2 id="message-title">Prima di <em>partire...</em></h2>
+        <p class="message-lead">Le avventure più belle sono quelle condivise.</p>
         <div class="travelers big"><span class="avatar avatar-a">☺</span><span class="heart-between">♥</span><span class="avatar avatar-b">☺</span></div>
-        <div class="letter"><span class="letter-tape"></span><p class="letter-title">Dear graduate,</p><p>This space is waiting for a little message from the people who love you. Here’s to adventures, laughter, and all the memories still to come!</p><p class="letter-sign">With love, ♡</p></div>
-        <div class="last-line">Your adventure starts now! <span>☘</span></div>
+        <div class="letter"><span class="letter-tape"></span><p class="letter-title">Cara Martina,</p><p>Qui arriverà una dedica speciale dalle persone che ti vogliono bene. Per ora, preparati a ridere, esplorare e creare ricordi bellissimi!</p><p class="letter-sign">Con affetto, ♡</p></div>
+        <div class="last-line">La tua avventura comincia adesso! <span>☘</span></div>
       </section>
     </main>
-    <nav class="bottom-nav" aria-label="Main navigation">
-      <button class="nav-btn selected" data-nav="home" aria-current="page"><span class="nav-icon">⌂</span><span>Home</span></button>
-      <button class="nav-btn" data-nav="map-view"><span class="nav-icon">⌖</span><span>Map</span></button>
-      <button class="nav-btn" data-nav="stops"><span class="nav-icon">⋯</span><span>Stops</span></button>
-      <button class="nav-btn" data-nav="message"><span class="nav-icon">♡</span><span>Message</span></button>
+    <nav class="bottom-nav" aria-label="Navigazione principale">
+      <button class="nav-btn selected" data-nav="home" aria-current="page"><span class="nav-icon">⌂</span><span>Inizio</span></button>
+      <button class="nav-btn" data-nav="map-view"><span class="nav-icon">⌖</span><span>Mappa</span></button>
+      <button class="nav-btn" data-nav="stops"><span class="nav-icon">⋯</span><span>Tappe</span></button>
+      <button class="nav-btn" data-nav="message"><span class="nav-icon">♡</span><span>Dedica</span></button>
     </nav>
   </div>
   <div class="sheet-overlay" id="sheet-overlay" hidden></div>
   <aside class="stop-sheet" id="stop-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-hidden="true">
-    <div class="sheet-handle"></div><button class="sheet-close" id="close-sheet" aria-label="Close destination">×</button>
+    <div class="sheet-handle"></div><button class="sheet-close" id="close-sheet" aria-label="Chiudi la tappa">×</button>
     <div id="sheet-content"></div>
   </aside>
-  <div class="reveal-overlay" id="reveal-overlay" hidden aria-hidden="true"><div class="reveal-card"><div class="reveal-icon">☘</div><span class="eyebrow">DESTINATION UNLOCKED</span><h2 id="reveal-name">Your adventure!</h2><p id="reveal-progress">A little surprise for you ♡</p></div></div>
+  <section class="journey-guide" id="journey-guide" hidden aria-live="polite" aria-label="Scoperta guidata del viaggio">
+    <div class="guide-top"><span class="guide-label" id="guide-label">La sorpresa di Martina</span><button type="button" class="guide-skip" id="guide-skip">Esplora liberamente ×</button></div>
+    <strong id="guide-title">Pronta a partire?</strong>
+    <p id="guide-text">Premi il pulsante per scoprire la prima tappa: la mappa ti accompagnerà nel viaggio.</p>
+    <div class="guide-progress" id="guide-progress" aria-label="Progressi della scoperta"></div>
+    <button class="guide-next" type="button" id="guide-next">Scopri la prima tappa ↗</button>
+  </section>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/destinations.js"></script>
   <script src="js/app.js"></script>

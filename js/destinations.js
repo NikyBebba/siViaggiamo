@@ -1,17 +1,17 @@
-// DEMO CONTENT: replace names, coordinates, photos and dedications when confirmed.
-// Coordinates follow the Leaflet format [latitude, longitude].
+// DATI DIMOSTRATIVI — sostituire le tappe con le destinazioni reali quando confermate.
+// Le coordinate sono espresse come latitudine e longitudine (Leaflet).
 window.TRIP = {
-  name: "Your Irish Adventure",
+  name: "siViaggiamo",
+  celebrant: "Martina",
   travelers: [
-    { name: "Traveller one", image: null }, // e.g. "assets/images/girl-1.jpg"
-    { name: "Traveller two", image: null }  // e.g. "assets/images/girl-2.jpg"
+    { name: "Martina", image: null }, // esempio: "assets/images/martina.jpg"
+    { name: "Seconda viaggiatrice", image: null } // esempio: "assets/images/amica.jpg"
   ],
   destinations: [
-    { id: "dublin", title: "Dublin", region: "County Dublin", lat: 53.3498, lng: -6.2603, day: null, icon: "✈", color: "#295642", image: null, description: "An exciting first stop, full of colourful streets, cosy corners and little adventures.", dedication: "The story begins here. Ready for your first Irish surprise?" },
-    { id: "galway", title: "Galway", region: "County Galway", lat: 53.2707, lng: -9.0568, day: null, icon: "♫", color: "#d5a078", image: null, description: "Bright streets, cheerful music and spontaneous moments worth remembering.", dedication: "A city for wandering, laughing and finding your new favourite place." },
-    { id: "cliffs", title: "Cliffs of Moher", region: "County Clare", lat: 52.9715, lng: -9.4309, day: null, icon: "≈", color: "#295642", image: null, description: "A little ocean magic and a breathtaking view along the wild Atlantic coast.", dedication: "For the moments that leave you speechless (in the best way)." },
-    { id: "killarney", title: "Killarney", region: "County Kerry", lat: 52.0599, lng: -9.5044, day: null, icon: "♣", color: "#d5a078", image: null, description: "Lakes, green landscapes and a perfect final chapter to this Irish adventure.", dedication: "The end of the route, but just the beginning of the memories." }
+    { id: "dublino", title: "Dublino", region: "Contea di Dublino", lat: 53.3498, lng: -6.2603, day: null, icon: "✈", color: "#295642", image: null, description: "Una prima tappa tra stradine vivaci, angoli caratteristici e tante cose da scoprire.", dedication: "Qui comincia il nostro viaggio. Sei pronta alla prima sorpresa irlandese?" },
+    { id: "galway", title: "Galway", region: "Contea di Galway", lat: 53.2707, lng: -9.0568, day: null, icon: "♫", color: "#d5a078", image: null, description: "Case colorate, musica per le strade e momenti da ricordare.", dedication: "Una città perfetta per perderci tra vicoli, risate e nuove scoperte." },
+    { id: "cliffs", title: "Cliffs of Moher", region: "Contea di Clare", lat: 52.9715, lng: -9.4309, day: null, icon: "≈", color: "#295642", image: null, description: "Scogliere spettacolari e panorami sull’oceano Atlantico.", dedication: "Per quei momenti che lasciano senza parole, nel senso più bello." },
+    { id: "killarney", title: "Killarney", region: "Contea di Kerry", lat: 52.0599, lng: -9.5044, day: null, icon: "♣", color: "#d5a078", image: null, description: "Laghi, paesaggi verdi e un finale tutto da scoprire.", dedication: "Finisce il percorso sulla mappa, ma i ricordi iniziano proprio qui." }
   ]
 };
-// IMPORTANT: the dotted path connects destinations geographically in sequence.
-// It is NOT a calculated driving route and must not be presented as one.
+// La linea tratteggiata è un collegamento grafico, NON un percorso stradale calcolato.
