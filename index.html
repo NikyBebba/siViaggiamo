@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,20,1;9..144,700,20,1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="css/style.css?v=1.5.1" />
+  <link rel="stylesheet" href="css/style.css?v=1.6" />
 </head>
 <body>
   <div class="shell">
@@ -54,6 +54,48 @@
         <div id="stops-list" class="timeline"></div>
         <div class="postcard"><span>✳</span><strong>Ricordi in arrivo...</strong><p>La parte migliore? Li costruirete insieme.</p></div>
       </section>
+      <section id="guide-view" class="view guide-view" aria-labelledby="guide-view-title">
+        <div class="guide-header">
+          <p class="eyebrow left">DIARIO DI VIAGGIO DIGITALE</p>
+          <h2 id="guide-view-title">La <em>guida di Martina</em></h2>
+          <p class="section-desc">Piccoli spunti, idee e consigli per vivere l’Irlanda con leggerezza. Tutto qui è dimostrativo o un segnaposto, da personalizzare quando vorrai.</p>
+          <div class="guide-visual" aria-hidden="true"><span>☘</span><span>◫</span><span>✦</span></div>
+        </div>
+        <div class="guide-controls" aria-label="Filtri della guida">
+          <div class="guide-cats" id="guide-cats" role="tablist" aria-label="Categorie"></div>
+          <div class="guide-filters-row">
+            <label class="guide-field" for="guide-city"><span>Città</span>
+              <select id="guide-city" aria-label="Filtra per città o destinazione"></select>
+            </label>
+            <label class="guide-field guide-search" for="guide-search"><span>Cerca</span>
+              <input id="guide-search" type="search" placeholder="Es. parco, pub, meteo…" autocomplete="off" />
+            </label>
+          </div>
+          <p class="guide-favs-note">♡ I preferiti sono salvati solo su questo dispositivo.</p>
+        </div>
+        <div id="guide-results" class="guide-results" aria-live="polite"></div>
+        <section class="ticket-section" id="ticket-section" aria-labelledby="ticket-title">
+          <p class="eyebrow left">UN REGALO PER TE</p>
+          <h3 id="ticket-title" class="ticket-heading">Il tuo biglietto regalo</h3>
+          <div class="ticket-card">
+            <div class="ticket-preview" aria-hidden="true">
+              <div class="ticket-stub">✦ VOUCHER ✦</div>
+              <div class="ticket-preview-main">
+                <p class="ticket-preview-to">per Martina</p>
+                <p class="ticket-preview-trip">Irlanda · sorpresa</p>
+              </div>
+              <div class="ticket-stub right">☘</div>
+            </div>
+            <div class="ticket-copy">
+              <h4 id="ticket-name">Il tuo biglietto regalo per l’Irlanda</h4>
+              <p id="ticket-sub" class="ticket-sub">Un voucher simbolico, tutto per Martina</p>
+              <p id="ticket-message">Testo di auguri provvisorio — personalizzabile.</p>
+              <p class="ticket-note" id="ticket-note">Buono regalo simbolico · non valido come titolo di viaggio</p>
+              <div id="ticket-action" class="ticket-action"></div>
+            </div>
+          </div>
+        </section>
+      </section>
       <section id="message" class="view message-view" aria-labelledby="message-title">
         <div class="message-star">♡</div><p class="eyebrow">UN’ULTIMA PICCOLA COSA</p><h2 id="message-title">Prima di <em>partire...</em></h2>
         <p class="message-lead">Le avventure più belle sono quelle condivise.</p>
@@ -63,10 +105,11 @@
       </section>
     </main>
     <nav class="bottom-nav" aria-label="Navigazione principale">
-      <button class="nav-btn selected" data-nav="home" aria-current="page"><span class="nav-icon">⌂</span><span>Inizio</span></button>
-      <button class="nav-btn" data-nav="map-view"><span class="nav-icon">⌖</span><span>Mappa</span></button>
-      <button class="nav-btn" data-nav="stops"><span class="nav-icon">⋯</span><span>Tappe</span></button>
-      <button class="nav-btn" data-nav="message"><span class="nav-icon">♡</span><span>Dedica</span></button>
+      <button class="nav-btn selected" data-nav="home" aria-current="page"><span class="nav-icon" aria-hidden="true">⌂</span><span class="nav-label">Inizio</span></button>
+      <button class="nav-btn" data-nav="map-view"><span class="nav-icon" aria-hidden="true">⌖</span><span class="nav-label">Mappa</span></button>
+      <button class="nav-btn" data-nav="stops"><span class="nav-icon" aria-hidden="true">⋯</span><span class="nav-label">Tappe</span></button>
+      <button class="nav-btn" data-nav="guide-view"><span class="nav-icon" aria-hidden="true">◫</span><span class="nav-label">Guida</span></button>
+      <button class="nav-btn" data-nav="message"><span class="nav-icon" aria-hidden="true">♡</span><span class="nav-label">Dedica</span></button>
     </nav>
   </div>
   <div class="sheet-overlay" id="sheet-overlay" hidden></div>
@@ -103,6 +146,7 @@
     </div>
   </div>
   <script src="js/destinations.js"></script>
-  <script src="js/app.js?v=1.5.1"></script>
+  <script src="js/guide-data.js"></script>
+  <script src="js/app.js?v=1.6"></script>
 </body>
 </html>

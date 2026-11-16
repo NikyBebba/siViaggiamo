@@ -224,6 +224,7 @@
       }, 120);
     }
     if (id === 'stops') updateTimeline();
+    if (id === 'guide-view') renderGuide();
     saveJourneyState();
     updateUI();
   }
@@ -500,6 +501,7 @@
         ${primary}
         <div class="sheet-secondary-actions">
           <a href="${mapsURL}" target="_blank" rel="noopener noreferrer">Apri su Google Maps ↗</a>
+          <button type="button" id="sheet-open-guide" class="sheet-guide-btn" data-dest-id="${escapeHTML(s.id)}">Cosa fare qui ◫</button>
           <button type="button" id="sheet-toggle" class="sheet-toggle-btn secondary" aria-expanded="true">${toggleLabel} ↑</button>
         </div>
         ${navActions ? `<div class="sheet-actions">${navActions}</div>` : ''}
@@ -526,6 +528,11 @@
       $('sheet-content').innerHTML = sheetHTML(index, state.sheetExpanded);
       bindSheetEvents(index);
       $('sheet-toggle')?.focus();
+    });
+    $('sheet-open-guide')?.addEventListener('click', () => {
+      const destId = $('sheet-open-guide')?.dataset.destId;
+      closeSheet({ restoreFocus: false });
+      openGuideForDestination(destId);
     });
   }
 
@@ -798,6 +805,204 @@
     if (isMapViewActive()) fitRoute(true);
   }
 
+  // --- Guida (v1.6) ---
+  const guideData = window.GUIDE || { categories: [], items: [], ticket: {} };
+  const guideItems = Array.isArray(guideData.items) ? guideData.items : [];
+  const FAV_KEY = 'siViaggiamoGuideFavorites';
+  const guideState = { category: 'all', city: 'all', search: '', destinationId: null };
+
+  function getValidItemIds() {
+    return new Set(guideItems.map((it) => it && it.id).filter(Boolean));
+  }
+  function loadFavorites() {
+    try {
+      const raw = localStorage.getItem(FAV_KEY);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return new Set();
+      const valid = getValidItemIds();
+      const cleaned = arr.filter((id) => typeof id === 'string' && valid.has(id));
+      const set = new Set(cleaned);
+      if (cleaned.length !== arr.length) localStorage.setItem(FAV_KEY, JSON.stringify([...set]));
+      return set;
+    } catch { return new Set(); }
+  }
+  function saveFavorites(set) {
+    try {
+      const valid = getValidItemIds();
+      const cleaned = [...set].filter((id) => valid.has(id));
+      localStorage.setItem(FAV_KEY, JSON.stringify(cleaned));
+    } catch { /* preferenze locali non disponibili */ }
+  }
+  let favoriteIds = loadFavorites();
+
+  function getDestinationById(id) {
+    return stops.find((s) => s.id === id) || null;
+  }
+  function getDestinationIndexById(id) {
+    return stops.findIndex((s) => s.id === id);
+  }
+
+  function openGuideForDestination(destinationId) {
+    guideState.destinationId = destinationId || null;
+    guideState.category = 'all';
+    guideState.city = 'all';
+    guideState.search = '';
+    goto('guide-view');
+  }
+
+  async function showPlaceOnMap({ destinationId = null, lat = null, lng = null, itemId = null } = {}) {
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+    const stopIndex = destinationId ? getDestinationIndexById(destinationId) : -1;
+    goto('map-view');
+    ensureMap();
+    if (!map) return;
+    if (hasCoords) {
+      // POI opzionale o luogo con coordinate: centro senza aggiungere pin all'itinerario
+      cancelTravel();
+      map.stop();
+      closeSheet({ restoreFocus: false, keepState: false });
+      const target = [lat, lng];
+      if (reduceMotion()) map.setView(target, 12, { animate: false });
+      else map.flyTo(target, 12, { animate: true, duration: 1.2, easeLinearity: 0.25 });
+      return;
+    }
+    if (stopIndex >= 0) {
+      if (isStopRevealed(stopIndex)) {
+        focusStop(stopIndex, { open: true });
+      } else {
+        // tappa principale non ancora svelata: mostra area generale senza rivelare pin
+        fitRoute(true);
+        setMapStatus('Questa tappa si svelerà durante il viaggio sulla mappa. Puoi comunque esplorare la guida!');
+        window.setTimeout(() => { if (getActiveViewId() === 'map-view') setMapStatus(''); }, 3500);
+      }
+    }
+  }
+
+  function getGuideCities() {
+    const set = new Set();
+    guideItems.forEach((it) => { if (it && it.city) set.add(it.city); });
+    return ['all', ...Array.from(set)];
+  }
+
+  function renderGuide() {
+    const catWrap = $('guide-cats');
+    const citySel = $('guide-city');
+    const results = $('guide-results');
+    if (!results) return;
+    if (catWrap) {
+      const cats = [{ id: 'all', label: 'Tutte', icon: '✳' }, ...(guideData.categories || [])];
+      catWrap.innerHTML = cats.map((c) => {
+        const active = guideState.category === c.id;
+        return `<button type="button" role="tab" class="guide-cat ${active ? 'active' : ''}" data-cat="${escapeHTML(c.id)}" aria-selected="${active}"><span aria-hidden="true">${escapeHTML(c.icon || '•')}</span> ${escapeHTML(c.label)}</button>`;
+      }).join('');
+      catWrap.querySelectorAll('[data-cat]').forEach((btn) => {
+        btn.addEventListener('click', () => { guideState.category = btn.dataset.cat || 'all'; renderGuide(); });
+      });
+    }
+    if (citySel) {
+      const cities = getGuideCities();
+      if (!cities.includes(guideState.city)) guideState.city = 'all';
+      citySel.innerHTML = cities.map((c) => `<option value="${escapeHTML(c)}">${c === 'all' ? 'Tutte le città' : escapeHTML(c)}</option>`).join('');
+      citySel.value = guideState.city;
+    }
+
+    const q = guideState.search.trim().toLowerCase();
+    let items = guideItems.filter((it) => it && it.id);
+    // sincronizza preferiti con dati correnti
+    favoriteIds = loadFavorites();
+    if (guideState.destinationId) items = items.filter((it) => it.destinationId === guideState.destinationId);
+    if (guideState.category && guideState.category !== 'all') items = items.filter((it) => it.category === guideState.category);
+    if (guideState.city && guideState.city !== 'all') items = items.filter((it) => it.city === guideState.city);
+    if (q) {
+      items = items.filter((it) => {
+        const hay = [it.title, it.description, it.notes, it.city, it.linkLabel].filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    const destFilter = guideState.destinationId ? getDestinationById(guideState.destinationId) : null;
+    const filterNote = destFilter ? `<div class="guide-filter-note"><span>Stai vedendo: <strong>${escapeHTML(destFilter.title)}</strong> (contenuti dimostrativi)</span><button type="button" class="text-btn small" id="guide-clear-dest">Mostra tutta la guida</button></div>` : '';
+
+    if (!items.length) {
+      results.innerHTML = `${filterNote}<div class="guide-empty"><span aria-hidden="true">◫</span><h3>Nessun contenuto qui (per ora)</h3><p>Prova a cambiare categoria, città o ricerca. Alcune sezioni sono segnaposto e verranno personalizzate.</p></div>`;
+    } else {
+      results.innerHTML = `${filterNote}<div class="guide-grid">${items.map((it) => {
+        const fav = favoriteIds.has(it.id);
+        const cat = (guideData.categories || []).find((c) => c.id === it.category);
+        const dest = it.destinationId ? getDestinationById(it.destinationId) : null;
+        const coords = it.coords && Number.isFinite(it.coords.lat) && Number.isFinite(it.coords.lng) ? it.coords : null;
+        const canMap = coords || (dest && Number.isFinite(dest.lat) && Number.isFinite(dest.lng));
+        const mapBtn = canMap ? `<button type="button" class="guide-btn secondary" data-map-item="${escapeHTML(it.id)}">Vedi sulla mappa</button>` : '';
+        const linkBtn = it.url ? `<a class="guide-btn link" href="${escapeHTML(it.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(it.linkLabel || 'Apri link ↗')}</a>` : '';
+        const notes = it.notes ? `<p class="guide-notes"><strong>Nota:</strong> ${escapeHTML(it.notes)}</p>` : '';
+        const poiTag = coords ? '<span class="guide-poi">Punto facoltativo</span>' : '';
+        const destTag = dest ? `<span class="guide-dest-tag">⌖ ${escapeHTML(dest.title)}</span>` : (it.city ? `<span class="guide-dest-tag">⌖ ${escapeHTML(it.city)}</span>` : '');
+        return `<article class="guide-card" data-item="${escapeHTML(it.id)}">
+          <div class="guide-card-top">
+            <div class="guide-tags"><span class="guide-cat-tag">${escapeHTML(cat?.icon || '•')} ${escapeHTML(cat?.label || 'Guida')}</span>${destTag}${poiTag}</div>
+            <button type="button" class="fav-btn ${fav ? 'active' : ''}" data-fav="${escapeHTML(it.id)}" aria-pressed="${fav}" aria-label="${fav ? 'Rimuovi dai preferiti' : 'Salva nei preferiti'}" title="${fav ? 'Rimuovi dai preferiti' : 'Salva nei preferiti'}">${fav ? '♥' : '♡'}</button>
+          </div>
+          <h3>${escapeHTML(it.title)}</h3>
+          <p>${escapeHTML(it.description || '')}</p>
+          ${notes}
+          <p class="guide-demo">Contenuto dimostrativo/segnaposto</p>
+          <div class="guide-card-actions">${mapBtn}${linkBtn}</div>
+        </article>`;
+      }).join('')}</div>`;
+    }
+
+    $('guide-clear-dest')?.addEventListener('click', () => { guideState.destinationId = null; renderGuide(); });
+    results.querySelectorAll('[data-fav]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.fav;
+        if (!id || !getValidItemIds().has(id)) return;
+        if (favoriteIds.has(id)) favoriteIds.delete(id); else favoriteIds.add(id);
+        saveFavorites(favoriteIds);
+        renderGuide();
+      });
+    });
+    results.querySelectorAll('[data-map-item]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.mapItem;
+        const item = guideItems.find((it) => it.id === id);
+        if (!item) return;
+        const coords = item.coords && Number.isFinite(item.coords.lat) && Number.isFinite(item.coords.lng) ? item.coords : null;
+        showPlaceOnMap({ destinationId: item.destinationId || null, lat: coords?.lat ?? null, lng: coords?.lng ?? null, itemId: item.id });
+      });
+    });
+  }
+
+  async function updateTicketUI() {
+    const wrap = $('ticket-action');
+    if (!wrap) return;
+    const t = guideData.ticket || {};
+    const title = $('ticket-name'); if (title) title.textContent = t.title || 'Il tuo biglietto regalo per l’Irlanda';
+    const sub = $('ticket-sub'); if (sub) sub.textContent = t.subtitle || 'Un voucher simbolico, tutto per Martina';
+    const msg = $('ticket-message'); if (msg) msg.textContent = t.message || 'Testo di auguri provvisorio — personalizzabile.';
+    const note = $('ticket-note'); if (note) note.textContent = t.note || 'Buono regalo simbolico · non valido come titolo di viaggio';
+    const path = t.pdfPath || 'assets/downloads/biglietto-martina.pdf';
+    wrap.innerHTML = `<span class="ticket-status">Verifica disponibilità…</span>`;
+    let available = false;
+    try {
+      const res = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+      available = !!res.ok;
+    } catch { available = false; }
+    if (available) {
+      wrap.innerHTML = `<a class="primary-btn ticket-download" href="${escapeHTML(path)}" download>Scarica il tuo biglietto</a><p class="ticket-status ok">Biglietto pronto per il download.</p>`;
+    } else {
+      wrap.innerHTML = `<button type="button" class="primary-btn ticket-download" disabled aria-disabled="true">Scarica il tuo biglietto</button><p class="ticket-status pending">Biglietto in preparazione — il file verrà aggiunto in seguito.</p>`;
+    }
+  }
+
+  function initGuide() {
+    const citySel = $('guide-city');
+    const search = $('guide-search');
+    if (citySel) citySel.addEventListener('change', () => { guideState.city = citySel.value || 'all'; renderGuide(); });
+    if (search) search.addEventListener('input', () => { guideState.search = search.value || ''; renderGuide(); });
+    updateTicketUI();
+  }
+
   // Wiring
   document.querySelectorAll('[data-nav]').forEach((el) => {
     el.addEventListener('click', (ev) => { ev.preventDefault(); goto(el.dataset.nav); });
@@ -868,6 +1073,7 @@
     state.revealed = 0;
   }
 
+  initGuide();
   updateTimeline();
   updateHomeCta();
 
@@ -876,6 +1082,8 @@
     resumeJourneyOnMap();
   } else if (location.hash === '#stops') {
     goto('stops');
+  } else if (location.hash === '#guide' || location.hash === '#guide-view') {
+    goto('guide-view');
   } else if (location.hash === '#message') {
     goto('message');
   } else {
