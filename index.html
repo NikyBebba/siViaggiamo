@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,20,1;9..144,700,20,1&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzxgSgJgGmL3XQ2w2bNQ9c8C+g=" crossorigin="" />
-  <link rel="stylesheet" href="css/style.css?v=1.2" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="css/style.css?v=1.3" />
 </head>
 <body>
   <div class="shell">
@@ -44,6 +44,7 @@
           <div class="map-help">✦ Tocca un pin numerato!</div>
         </div>
         <div class="map-footer"><span>✦ La nostra avventura</span><div class="map-footer-actions"><button id="restart-tour" class="text-btn" type="button">Rivivi la sorpresa ↺</button><button id="view-stops" class="text-btn" type="button">Tutte le tappe →</button></div></div>
+        <p id="map-status" class="map-status" role="status" aria-live="polite" hidden></p>
       </section>
       <section id="stops" class="view stops-view" aria-labelledby="stops-title">
         <p class="eyebrow left">IL PIANO DELL’AVVENTURA</p><h2 id="stops-title">Il nostro <em>viaggio!</em></h2>
@@ -73,13 +74,13 @@
   </aside>
   <section class="journey-guide" id="journey-guide" hidden aria-live="polite" aria-label="Scoperta guidata del viaggio">
     <div class="guide-top"><span class="guide-label" id="guide-label">La sorpresa di Martina</span><button type="button" class="guide-skip" id="guide-skip">Esplora liberamente ×</button></div>
-    <strong id="guide-title">Pronta a partire?</strong>
+    <strong id="guide-title">Martina, pronta a partire?</strong>
     <p id="guide-text">Premi il pulsante per scoprire la prima tappa: la mappa ti accompagnerà nel viaggio.</p>
     <div class="guide-progress" id="guide-progress" aria-label="Progressi della scoperta"></div>
-    <button class="guide-next" type="button" id="guide-next">Scopri la prima tappa ↗</button>
+    <button class="guide-next" type="button" id="guide-next">Scopri la prima tappa</button>
   </section>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/destinations.js"></script>
-  <script src="js/app.js?v=1.2"></script>
+  <script src="js/app.js?v=1.3"></script>
 </body>
 </html>
