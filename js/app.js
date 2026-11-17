@@ -142,6 +142,19 @@
   function isStopRevealed(index) { return isJourneyCompleted() || index < state.revealed; }
   function sheetIsOpen() { return $('stop-sheet')?.classList.contains('open'); }
 
+  // Unico punto di smontaggio dei pannelli flottanti della Mappa: nessun avanzo
+  // può restare visibile o intercettare click quando si cambia sezione.
+  function hideMapPanels({ clearContent = false } = {}) {
+    closeSheet({ restoreFocus: false, keepState: true });
+    closeFinale({ restoreFocus: false });
+    const guide = $('journey-guide');
+    if (guide) guide.hidden = true;
+    if (clearContent) {
+      const content = $('sheet-content');
+      if (content) content.textContent = '';
+    }
+  }
+
   function setMapStatus(message) {
     const el = $('map-status');
     if (!el) return;
@@ -208,12 +221,13 @@
     if (fromMap && id !== 'map-view') {
       cancelTravel();
       clearCompletionTimer();
-      closeSheet({ restoreFocus: false, keepState: true });
-      closeFinale({ restoreFocus: false });
       if (state.mode === 'moving') {
         setResumableStateAfterInterruption();
       }
     }
+    // Uscendo dalla Mappa tutti i pannelli vengono rimossi, anche se non si
+    // proveniva dalla Mappa (link dalla Guida, dalle Tappe o dal finale).
+    if (id !== 'map-view') hideMapPanels({ clearContent: true });
 
     document.querySelectorAll('.view').forEach((view) => view.classList.toggle('active', view.id === id));
     document.querySelectorAll('.nav-btn').forEach((btn) => {
@@ -223,13 +237,6 @@
       else btn.removeAttribute('aria-current');
     });
     window.scrollTo({ top: 0, behavior: 'instant' });
-
-    if (id !== 'map-view') {
-      const guide = $('journey-guide');
-      if (guide) guide.hidden = true;
-      // sicurezza: nessuna cartolina mappa deve restare aperta fuori dalla Mappa
-      if (!fromMap) closeSheet({ restoreFocus: false, keepState: true });
-    }
 
     if (id === 'map-view') {
       ensureMap();
@@ -652,7 +659,9 @@
     }
 
     // ultima verifica: mai aprire un pannello vuoto
-    if ((content.innerText || '').trim().length < 4) {
+    // textContent, non innerText: il pannello è ancora visibility:hidden quando
+    // il contenuto viene preparato, e innerText risulterebbe vuoto a torto.
+    if ((content.textContent || '').trim().length < 4) {
       content.innerHTML = renderSheetFallback(index);
       content.querySelector('#sheet-close-fallback')?.addEventListener('click', () => closeSheet());
     }
@@ -694,11 +703,13 @@
     const el = $('journey-finale');
     if (!el) return;
     el.hidden = false;
+    el.setAttribute('aria-hidden', 'false');
   }
   function closeFinale({ restoreFocus = true } = {}) {
     const el = $('journey-finale');
     if (!el || el.hidden) return;
     el.hidden = true;
+    el.setAttribute('aria-hidden', 'true');
     if (restoreFocus && isMapViewActive()) $('guide-next')?.focus?.();
   }
 
@@ -739,6 +750,12 @@
       return;
     }
 
+    // Un solo pannello flottante alla volta: la guida si ritira con la cartolina aperta.
+    if (sheetIsOpen()) {
+      guide.hidden = true;
+      return;
+    }
+
     if (canExploreFreely() || isJourneyCompleted()) {
       const discovered = stops.length;
       const compact = state.mode === 'free-exploration' || state.completionAcknowledged;
@@ -764,8 +781,7 @@
       return;
     }
 
-    const sheetOpen = sheetIsOpen();
-    const show = state.mode === 'idle' || (state.mode === 'stop-revealed' && !sheetOpen);
+    const show = state.mode === 'idle' || state.mode === 'stop-revealed';
     guide.hidden = !show;
     guide.className = 'journey-guide compact';
     label.textContent = `Sorpresa · ${state.revealed}/${stops.length}`;

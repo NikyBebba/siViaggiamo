@@ -11,13 +11,13 @@ window.TRIP = {
     {
       name: 'Martina',
       image: 'assets/images/avatar-martina.webp',
-      imagePosition: 'center 46%',
+      imagePosition: 'center 41%',
       alt: 'Ritratto di Martina',
     },
     {
       name: 'Lorenza',
       image: 'assets/images/avatar-lorenza.webp',
-      imagePosition: 'center 49%',
+      imagePosition: 'center 47%',
       alt: 'Ritratto di Lorenza',
     },
   ],
