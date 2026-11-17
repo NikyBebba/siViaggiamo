@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const STOPS = ['Dublino', 'Galway', 'Cliffs of Moher', 'Killarney'];
+const STOPS = ['Dublino', 'Glendalough', 'Galway', 'Cliffs of Moher', 'Howth'];
 
 async function attachDiagnostics(page, label) {
   const errors = [];
@@ -17,6 +17,10 @@ async function openFresh(page) {
     try { sessionStorage.clear(); localStorage.clear(); } catch {}
   });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => {
+    const el = document.getElementById('ticket-action');
+    return !!el && el.textContent.trim().length > 0;
+  });
 }
 
 async function getUIState(page) {
@@ -112,11 +116,11 @@ test.describe('Stability gate', () => {
       await page.locator('#close-sheet').click();
       await expect(page.locator('#stop-sheet')).not.toHaveClass(/open/);
 
-      // 5. to Galway
+      // 5. to Glendalough
       await page.locator('#guide-next').click();
-      await expect(page.locator('#sheet-title')).toContainText(/Galway/i, { timeout: 20000 });
+      await expect(page.locator('#sheet-title')).toContainText(/Glendalough/i, { timeout: 20000 });
       await expect(page.locator('#stop-sheet')).toHaveClass(/open/);
-      await assertNoBadState(page, `c${cycle} galway`);
+      await assertNoBadState(page, `c${cycle} glendalough`);
 
       // 6. continue to last
       for (let i = 2; i < STOPS.length; i++) {

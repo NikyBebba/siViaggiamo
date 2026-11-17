@@ -5,6 +5,11 @@
   const stops = Array.isArray(data?.destinations) ? data.destinations : [];
   const $ = (id) => document.getElementById(id);
   const STORAGE_KEY = 'siViaggiamoJourneyState';
+  // v1.7: cinque destinazioni contro le quattro della v1.6.
+  // Un salvataggio vecchio non può essere riutilizzato: indici e cartoline non corrispondono più.
+  const STATE_VERSION = 2;
+  const STOP_SIGNATURE = stops.map((s) => s.id).join('|');
+  const LEGACY_FLAGS = ['siViaggiamoIntroduzioneCompletata', 'siViaggiamoCompletamentoConfermato', 'siViaggiamoFinaleMostrata'];
 
   function clampInt(value, min, max, fallback) {
     const n = Number.parseInt(value, 10);
@@ -12,18 +17,21 @@
     return Math.min(max, Math.max(min, n));
   }
 
+  function clearLegacyJourneyFlags() {
+    try { LEGACY_FLAGS.forEach((key) => sessionStorage.removeItem(key)); } catch {}
+  }
+
   function loadJourneyState() {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        // Compatibilità con v1.5: solo flag di completamento
-        if (sessionStorage.getItem('siViaggiamoIntroduzioneCompletata') === 'yes') {
-          return { revealed: stops.length, mode: 'free-exploration', activeStop: Math.max(0, stops.length - 1), completionAcknowledged: true, finalShown: true };
-        }
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      // Migrazione sicura: scarta versioni/strutture incompatibili e riparte da uno stato pulito.
+      if (!parsed || typeof parsed !== 'object' || parsed.v !== STATE_VERSION || parsed.stopSignature !== STOP_SIGNATURE) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        clearLegacyJourneyFlags();
         return null;
       }
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object') return null;
       const revealed = clampInt(parsed.revealed, 0, stops.length, 0);
       let mode = typeof parsed.mode === 'string' ? parsed.mode : 'idle';
       const activeStop = clampInt(parsed.activeStop, 0, Math.max(0, stops.length - 1), Math.max(0, revealed - 1));
@@ -81,7 +89,8 @@
   function saveJourneyState() {
     try {
       const payload = {
-        v: 1,
+        v: STATE_VERSION,
+        stopSignature: STOP_SIGNATURE,
         mode: state.mode,
         revealed: state.revealed,
         activeStop: state.activeStop,
@@ -89,14 +98,8 @@
         finalShown: state.finalShown,
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      // flag legacy per compatibilità
-      if (state.revealed >= stops.length || canExploreFreely()) {
-        sessionStorage.setItem('siViaggiamoIntroduzioneCompletata', 'yes');
-      } else {
-        sessionStorage.removeItem('siViaggiamoIntroduzioneCompletata');
-      }
-      sessionStorage.setItem('siViaggiamoCompletamentoConfermato', state.completionAcknowledged ? 'yes' : 'no');
-      sessionStorage.setItem('siViaggiamoFinaleMostrata', state.finalShown ? 'yes' : 'no');
+      // Nessun flag legacy: uno stato v1.6 non deve mai essere riutilizzato dalla v1.7.
+      clearLegacyJourneyFlags();
     } catch {
       // storage non disponibile: l'esperienza resta funzionante in memoria
     }
@@ -109,12 +112,19 @@
   function applyAvatar(el, traveler) {
     if (!el || !traveler) return;
     el.title = traveler.name || '';
-    el.setAttribute('aria-label', traveler.name || 'Viaggiatrice');
+    el.setAttribute('aria-label', traveler.alt ? `${traveler.name} — ritratto` : (traveler.name || 'Viaggiatrice'));
     if (traveler.image) {
-      el.style.backgroundImage = `url("${String(traveler.image).replaceAll('"', '%22')}")`;
+      // Foto reale: <img> con object-fit/object-position, ritaglio circolare gestito dal CSS.
+      // L'elemento ha già role="img" e aria-label in HTML; il testo alternativo vive sull'immagine.
       el.textContent = '';
+      const img = document.createElement('img');
+      img.src = traveler.image;
+      img.alt = traveler.alt || `Ritratto di ${traveler.name || 'viaggiatrice'}`;
+      if (traveler.imagePosition) img.style.objectPosition = traveler.imagePosition;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      el.appendChild(img);
     } else {
-      el.style.backgroundImage = '';
       if (!el.textContent) el.textContent = '☺';
     }
   }
@@ -230,8 +240,9 @@
         else renderProgress();
       }, 120);
     }
-    if (id === 'stops') updateTimeline();
+    if (id === 'stops') { updateTimeline(); renderDays(); }
     if (id === 'guide-view') renderGuide();
+    updateEasterEgg();
     saveJourneyState();
     updateUI();
   }
@@ -419,6 +430,39 @@
         if (!map) return;
         focusStop(index, { open: true });
       });
+    });
+  }
+
+  function renderDays() {
+    const list = $('days-list');
+    if (!list) return;
+    const days = Array.isArray(data?.days) ? data.days : [];
+    if (!days.length) { list.hidden = true; return; }
+    list.hidden = false;
+    list.innerHTML = days.map((day) => {
+      const activities = Array.isArray(day.activities) && day.activities.length
+        ? `<div class="day-line"><strong>Da fare</strong><span>${day.activities.map((a) => escapeHTML(a)).join(' · ')}</span></div>`
+        : '';
+      const travel = Array.isArray(day.travel) && day.travel.length
+        ? `<div class="day-line"><strong>Spostamenti</strong><span>${day.travel.map((t) => escapeHTML(t)).join(' · ')}</span></div>`
+        : '';
+      const guideBtn = day.destinationId && getDestinationById(day.destinationId)
+        ? `<button type="button" class="day-guide" data-guide-dest="${escapeHTML(day.destinationId)}">Apri la Guida di ${escapeHTML(day.place || getDestinationById(day.destinationId).title)} ↗</button>`
+        : '';
+      return `<article class="day-card">
+        <div class="day-head">
+          <span class="day-date">${escapeHTML(day.date || '')}</span>
+          <h3>${escapeHTML(day.title || '')}</h3>
+          ${day.place ? `<span class="day-place">⌖ ${escapeHTML(day.place)}</span>` : ''}
+        </div>
+        <p class="day-desc">${escapeHTML(day.description || '')}</p>
+        <div class="day-lines">${activities}${travel}</div>
+        ${guideBtn}
+      </article>`;
+    }).join('');
+
+    list.querySelectorAll('[data-guide-dest]').forEach((btn) => {
+      btn.addEventListener('click', () => openGuideForDestination(btn.dataset.guideDest));
     });
   }
 
@@ -760,8 +804,7 @@
     state.sheetExpanded = false;
     state.completionAcknowledged = false;
     state.finalShown = false;
-    sessionStorage.removeItem('siViaggiamoFinaleMostrata');
-    sessionStorage.removeItem('siViaggiamoCompletamentoConfermato');
+    clearLegacyJourneyFlags();
     state.mode = 'idle';
     saveJourneyState();
     renderProgress();
@@ -958,6 +1001,22 @@
     return ['all', ...Array.from(set)];
   }
 
+  // Easter egg: solo nella Guida filtrata per Howth, mai immagine principale né nuova tappa.
+  function resetEasterEggReveal() {
+    const reveal = $('easter-egg-reveal');
+    const toggle = $('easter-egg-toggle');
+    if (reveal) reveal.hidden = true;
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function updateEasterEgg() {
+    const egg = $('howth-easter-egg');
+    if (!egg) return;
+    const show = getActiveViewId() === 'guide-view' && guideState.destinationId === 'howth';
+    egg.hidden = !show;
+    if (!show) resetEasterEggReveal();
+  }
+
   function renderGuide() {
     const catWrap = $('guide-cats');
     const citySel = $('guide-city');
@@ -997,10 +1056,10 @@
     }
 
     const destFilter = guideState.destinationId ? getDestinationById(guideState.destinationId) : null;
-    const filterNote = destFilter ? `<div class="guide-filter-note"><span>Stai vedendo: <strong>${escapeHTML(destFilter.title)}</strong> (contenuti dimostrativi)</span><button type="button" class="text-btn small" id="guide-clear-dest">Mostra tutta la guida</button></div>` : '';
+    const filterNote = destFilter ? `<div class="guide-filter-note"><span>Stai vedendo: <strong>${escapeHTML(destFilter.title)}</strong></span><button type="button" class="text-btn small" id="guide-clear-dest">Mostra tutta la guida</button></div>` : '';
 
     if (!items.length) {
-      results.innerHTML = `${filterNote}<div class="guide-empty"><span aria-hidden="true">◫</span><h3>Nessun contenuto qui (per ora)</h3><p>Prova a cambiare categoria, città o ricerca. Alcune sezioni sono segnaposto e verranno personalizzate.</p></div>`;
+      results.innerHTML = `${filterNote}<div class="guide-empty"><span aria-hidden="true">◫</span><h3>Nessun contenuto qui</h3><p>Prova a cambiare categoria, città o ricerca per trovare altri spunti.</p></div>`;
     } else {
       results.innerHTML = `${filterNote}<div class="guide-grid">${items.map((it) => {
         const fav = favoriteIds.has(it.id);
@@ -1021,7 +1080,6 @@
           <h3>${escapeHTML(it.title)}</h3>
           <p>${escapeHTML(it.description || '')}</p>
           ${notes}
-          <p class="guide-demo">Contenuto dimostrativo/segnaposto</p>
           <div class="guide-card-actions">${mapBtn}${linkBtn}</div>
         </article>`;
       }).join('')}</div>`;
@@ -1046,6 +1104,7 @@
         showPlaceOnMap({ destinationId: item.destinationId || null, lat: coords?.lat ?? null, lng: coords?.lng ?? null, itemId: item.id });
       });
     });
+    updateEasterEgg();
   }
 
   async function updateTicketUI() {
@@ -1117,6 +1176,15 @@
   $('close-sheet')?.addEventListener('click', () => closeSheet());
   $('sheet-overlay')?.addEventListener('click', () => closeSheet());
 
+  $('easter-egg-toggle')?.addEventListener('click', () => {
+    const reveal = $('easter-egg-reveal');
+    const toggle = $('easter-egg-toggle');
+    if (!reveal || !toggle) return;
+    const willExpand = reveal.hidden;
+    reveal.hidden = !willExpand;
+    toggle.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
+  });
+
   $('finale-close')?.addEventListener('click', () => closeFinale());
   $('finale-map')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); if (state.mode === 'completed') { state.completionAcknowledged = true; state.mode = 'free-exploration'; saveJourneyState(); } updateUI(); if (isMapViewActive()) fitRoute(true); });
   $('finale-message')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); goto('message'); });
@@ -1127,6 +1195,10 @@
     if (ev.key === 'Escape') {
       if (open) closeSheet();
       else if (finaleOpen) closeFinale();
+      else {
+        const eggReveal = $('easter-egg-reveal');
+        if (eggReveal && !eggReveal.hidden && getActiveViewId() === 'guide-view') resetEasterEggReveal();
+      }
       return;
     }
     if (open && isMapViewActive() && isJourneyCompleted() && state.mode !== 'stop-revealed') {
@@ -1150,6 +1222,7 @@
 
   initGuide();
   updateTimeline();
+  renderDays();
   updateHomeCta();
 
   if (location.hash === '#map' || location.hash === '#map-view') {

@@ -4,13 +4,17 @@
  */
 const { test, expect } = require('@playwright/test');
 
-const STOPS = ['Dublino', 'Galway', 'Cliffs of Moher', 'Killarney'];
+const STOPS = ['Dublino', 'Glendalough', 'Galway', 'Cliffs of Moher', 'Howth'];
 
 async function openFresh(page) {
   await page.addInitScript(() => {
     try { sessionStorage.clear(); localStorage.clear(); } catch {}
   });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => {
+    const el = document.getElementById('ticket-action');
+    return !!el && el.textContent.trim().length > 0;
+  });
 }
 
 async function startOnMap(page) {
@@ -65,9 +69,9 @@ test.describe('Hotfix cartoline tour', () => {
     await startOnMap(page);
     await discoverNext(page, /Dublino/i);
     await page.locator('#sheet-advance').click();
-    await expect(page.locator('#sheet-title')).toContainText(/Galway/i, { timeout: 20000 });
+    await expect(page.locator('#sheet-title')).toContainText(/Glendalough/i, { timeout: 20000 });
     await expect(page.locator('#stop-sheet')).toHaveClass(/open/);
-    await expect(page.locator('#sheet-content')).toContainText(/Galway/i);
+    await expect(page.locator('#sheet-content')).toContainText(/Glendalough/i);
   });
 
   test('espandi cartolina, mostra meno, chiusura e navigazione libera', async ({ page }) => {
@@ -85,14 +89,16 @@ test.describe('Hotfix cartoline tour', () => {
 
     // Passa alla tappa successiva nel tour guidato
     await page.locator('#sheet-advance').click();
-    await expect(page.locator('#sheet-title')).toContainText(/Galway/i, { timeout: 20000 });
-    await expect(page.locator('#sheet-content')).toContainText(/Galway/i);
+    await expect(page.locator('#sheet-title')).toContainText(/Glendalough/i, { timeout: 20000 });
+    await expect(page.locator('#sheet-content')).toContainText(/Glendalough/i);
 
     // Completa il tour per entrare in esplorazione libera
     await page.locator('#sheet-advance').click();
+    await expect(page.locator('#sheet-title')).toContainText(/Galway/i, { timeout: 20000 });
+    await page.locator('#sheet-advance').click();
     await expect(page.locator('#sheet-title')).toContainText(/Cliffs of Moher/i, { timeout: 20000 });
     await page.locator('#sheet-advance').click();
-    await expect(page.locator('#sheet-title')).toContainText(/Killarney/i, { timeout: 20000 });
+    await expect(page.locator('#sheet-title')).toContainText(/Howth/i, { timeout: 20000 });
     await page.locator('#sheet-advance').click(); // termina scoperta
     await expect(page.locator('#journey-finale')).toBeVisible({ timeout: 15000 });
     await page.locator('#finale-map').click();
@@ -103,8 +109,8 @@ test.describe('Hotfix cartoline tour', () => {
     // Chiusura e riapertura in navigazione libera
     await page.locator('#map').getByRole('button', { name: '2', exact: true }).click();
     await expect(page.locator('#stop-sheet')).toHaveClass(/open/, { timeout: 15000 });
-    await expect(page.locator('#sheet-title')).toContainText(/Galway/i);
-    await expect(page.locator('#sheet-content')).toContainText(/Galway/i);
+    await expect(page.locator('#sheet-title')).toContainText(/Glendalough/i);
+    await expect(page.locator('#sheet-content')).toContainText(/Glendalough/i);
     await page.locator('#close-sheet').click();
     await expect(page.locator('#stop-sheet')).not.toHaveClass(/open/);
   });

@@ -1,16 +1,20 @@
 # siViaggiamo ☘ — il regalo di Martina
 
-Mini sito di viaggio per la laurea di Martina, realizzato con **HTML, CSS e JavaScript puro**. Design giocoso ispirato a un diario di viaggio (*Playful Travel Scrapbook*), mappa interattiva dell'Irlanda, quattro tappe dimostrative, cartoline-dedica, **Guida di viaggio** con biglietto regalo e due avatar provvisori. Compatibile con GitHub Pages (nessun backend).
+Mini sito di viaggio per la laurea di Martina, realizzato con **HTML, CSS e JavaScript puro**. Design giocoso ispirato a un diario di viaggio (*Playful Travel Scrapbook*), mappa interattiva dell'Irlanda, **v1.7 Ireland Edition**: cinque destinazioni reali, sei giornate di programma, cartoline-dedica con foto autorizzate, **Guida di viaggio** con link ufficiali, easter egg e due avatar fotografici. Compatibile con GitHub Pages (nessun backend, nessun database, nessun framework).
+
+Viaggio: **Irlanda, 5–10 maggio 2027** — Martina e Lorenza.
 
 ## Esperienza di scoperta
 
 1. Martina apre il sito e dalla Home usa il pulsante principale, che si adatta allo stato: **Scopri la sorpresa** (mai iniziato), **Continua il viaggio** (in corso) o **Esplora il viaggio** (completato/esplorazione libera).
 2. Sulla mappa compare un invito alla scoperta guidata con un solo comando di avanzamento alla volta: **Scopri la prima tappa** e poi **Scopri la prossima tappa** / **Termina la scoperta**.
 3. A ogni scelta, la guida si fa da parte, la mappa compie un movimento verso la destinazione successiva e il percorso illustrato si arricchisce progressivamente.
-4. **Solo al termine del movimento** si apre dal basso la cartolina della tappa (compatta/espandibile), con foto/segnaposto, descrizione, dedica e azioni disponibili. Il viaggio **non avanza mai automaticamente**: decide sempre Martina.
+4. **Solo al termine del movimento** si apre dal basso la cartolina della tappa (compatta/espandibile), con foto, descrizione, dedica e azioni disponibili. Il viaggio **non avanza mai automaticamente**: decide sempre Martina.
 5. Al termine compare un piccolo messaggio celebrativo e tutte le tappe diventano liberamente esplorabili. È possibile ripetere l’esperienza con **Rivivi la sorpresa**.
 
-Durante la scoperta la sezione **Tappe** funziona come diario: le destinazioni non ancora svelate restano “misteriose”; dopo il completamento tutte le cartoline sono consultabili e collegate alla mappa. La progressione è ricordata nella sessione del browser (`sessionStorage`, con gestione sicura di dati non validi/precedenti): navigazione tra sezioni, refresh e ripresa sono supportati in modo prevedibile (nessun account, nessun database). Il pannello di scoperta è visibile **solo** nella sezione Mappa.
+Il percorso di scoperta ha **cinque destinazioni**: Dublino, Glendalough, Galway, Cliffs of Moher e Howth. Dublino viene svelata **una sola volta**, pur essendo rivisitata il 9 maggio. Le **sei giornate** (5–10 maggio) sono raccontate nella sezione Tappe e sono distinte dalle destinazioni della mappa: hotel, attrazioni e attività non diventano tappe principali.
+
+La progressione è ricordata nella sessione del browser (`sessionStorage`). I salvataggi della v1.6 (quattro tappe) vengono **scartati in modo sicuro** e non possono generare cartoline errate o stati impossibili: la v1.7 usa `v: 2` e una firma sugli ID delle destinazioni. Navigazione tra sezioni, refresh e ripresa sono supportati in modo prevedibile (nessun account, nessun database). Il pannello di scoperta è visibile **solo** nella sezione Mappa.
 
 ## Avvio locale
 
@@ -30,17 +34,23 @@ Carica il contenuto della cartella nella **radice del repository**, non in una s
 
 Sito previsto: https://nikybebba.github.io/siViaggiamo/
 
-Dopo il caricamento, ricarica la pagina senza cache per vedere i nuovi file.
+Dopo il caricamento, ricarica la pagina senza cache per vedere i nuovi file. La configurazione GitHub Pages non è stata modificata.
 
-## Sezione Guida (v1.6)
+## Sezione Guida (v1.7)
 
-La navigazione principale include **Inizio · Mappa · Tappe · Guida · Dedica**. La sezione **Guida** («La guida di Martina») è un diario di viaggio digitale con contenuti dimostrativi/segnaposto organizzati per categorie:
+La navigazione principale include **Inizio · Mappa · Tappe · Guida · Dedica**. La sezione **Guida** («La guida di Martina») raccoglie informazioni reali e verificabili, organizzate per categorie:
 
 - **Da visitare**, **Come muoversi**, **Food & Drink**, **Consigli utili**
 - filtri per categoria e città, ricerca testuale leggera e stati vuoti chiari
 - preferiti locali salvati in `localStorage` (solo su questo dispositivo, con ID stabili e pulizia automatica di dati non più presenti)
-- collegamenti: dalla cartolina di una tappa **«Cosa fare qui»** apre la Guida filtrata per quella destinazione; dalla Guida **«Vedi sulla mappa»** apre il luogo appropriato quando disponibili coordinate/destinazione
+- collegamenti ufficiali: Transport for Ireland (Journey Planner), Leap Card, Dublin Bus, Irish Rail, St. Kevin’s Bus Service, insieme ai siti delle attrazioni principali
+- collegamenti interni: dalla cartolina di una tappa **«Cosa fare qui»** apre la Guida filtrata per quella destinazione; dalla Guida **«Vedi sulla mappa»** apre il luogo appropriato quando disponibili coordinate/destinazione; dalle **Giornate** si apre la Guida della destinazione corrispondente
 - i punti di interesse facoltativi (POI) **non** vengono aggiunti ai pin dell’itinerario regalo
+- nessun prezzo, costo, tariffa o confronto economico; orari e collegamenti sono **indicazioni di programma**, non prenotazioni confermate
+
+### Easter egg
+
+Nella sola **Guida di Howth** compare una sorpresa fotografica intitolata **«Avvistamento raro a Howth 🦭»**, con il pulsante **«Scopri chi sono»**. La foto si rivela solo su richiesta (anche da tastiera), si richiude con Escape e non diventa mai una nuova tappa né un'immagine principale. Fuori dal contesto Howth l'easter egg resta nascosto.
 
 ### Biglietto regalo
 
@@ -52,11 +62,12 @@ Nella Guida è presente un voucher regalo simbolico (non un biglietto aereo/ferr
 
 ## Personalizzazione
 
-- **Dati di viaggio e tappe:** `js/destinations.js` (unica sorgente): `travelers[].name`/`image`, `destinations` (ordine, `id`, `title`, `region`, `lat`/`lng`, `description`, `dedication`, `color`, `icon`, `image`, eventuale `day`). `image: null` mostra un segnaposto/fallback.
-- **Contenuti Guida:** `js/guide-data.js` (dati separati dal rendering): categorie, elementi (ID univoco, categoria, titolo, città/destinazione associata, descrizione, immagine opzionale, URL/etichetta link, coordinate opzionali, note pratiche) e configurazione del biglietto (`ticket`: titolo, sottotitolo, messaggio, nota, `pdfPath`). I contenuti iniziali sono **dimostrativi/segnaposto**: non inventare prenotazioni, mezzi acquistati, orari, prezzi o informazioni non comunicate.
-- **Dedica finale:** `index.html`, sezione `id="message"`.
+- **Dati di viaggio e tappe:** `js/destinations.js` (unica sorgente): `travelers[].name`/`image`/`imagePosition`/`alt`, `destinations` (ordine, `id`, `title`, `region`, `lat`/`lng`, `description`, `dedication`, `color`, `icon`, `image`, eventuale `day`) e `days` (sei giornate con `date`, `title`, `place`, `destinationId`, `description`, `activities`, `travel`). `image: null` mostra un segnaposto/fallback.
+- **Contenuti Guida:** `js/guide-data.js` (dati separati dal rendering): categorie, elementi (ID univoco, categoria, titolo, città/destinazione associata, descrizione, immagine opzionale, URL/etichetta link, coordinate opzionali, note pratiche) e configurazione del biglietto (`ticket`). Non inventare prenotazioni, mezzi acquistati, orari confermati, prezzi o informazioni non comunicate.
+- **Dedica finale:** `index.html`, sezione `id="message"`. Il testo attuale è dichiaratamente **provvisorio — da personalizzare**.
+- **Crediti immagini online:** `docs/ASSET_CREDITS.md`. Le foto personali restano in `Photos/` (esclusa da Git); in `assets/images/` sono presenti solo gli asset approvati e ottimizzati. Gli originali non sono stati modificati.
 
-**Importante:** Dublino, Galway, Cliffs of Moher e Killarney sono tappe *dimostrative*. Non rappresentano un itinerario confermato. La linea tratteggiata collega i luoghi nell’ordine del file: **non è una strada calcolata**.
+**Importante:** la linea tratteggiata sulla mappa collega i luoghi nell’ordine del file: **non è una strada calcolata** e non rappresenta un percorso stradale confermato.
 
 ## Mappa e compatibilità
 
@@ -64,17 +75,19 @@ Nella Guida è presente un voucher regalo simbolico (non un biglietto aereo/ferr
 - Risorse Leaflet caricate con versione fissata; il codice ricalcola le dimensioni della mappa quando la vista diventa visibile/si ridimensiona per mantenere le tile allineate.
 - Le mappe OSM rispettano la policy https://operations.osmfoundation.org/policies/tiles/.
 - Animazioni e transizioni rispettano `prefers-reduced-motion`.
+- Avatar: copie WebP con correzione EXIF, forma circolare, `object-fit: cover` e `object-position` calibrato; testo alternativo e bordo scrapbook.
 
-Per fotografie e dediche reali, raccogliere il consenso delle persone interessate prima della pubblicazione pubblica.
+## Test
 
-## Test rapidi
+```bash
+npx playwright test --project=chromium-desktop
+npx playwright test --project=chromium-mobile
+```
 
-- [ ] Tutte le pagine in italiano; nome **siViaggiamo** e festeggiata **Martina**.
-- [ ] Navigazione a cinque elementi (Inizio · Mappa · Tappe · Guida · Dedica) leggibile/usabile su mobile, senza overflow.
-- [ ] Tour: scoperta manuale, un solo controllo di avanzamento alla volta, cartolina solo a fine movimento, nessuna regressione; pannello guida visibile **solo** in Mappa.
-- [ ] Home: pulsante dinamico corretto (mai iniziato / in corso / completato), aggiornamento immediato e ripresa progressione (incluso refresh, secondo persistenza di sessione).
-- [ ] Guida: caricamento, filtri per categoria/città, ricerca testuale, stati vuoti chiari, link esterni funzionanti.
-- [ ] Preferiti locali: salvataggio in `localStorage`, ID stabili, gestione sicura di dati obsoleti/non presenti, nota «solo su questo dispositivo».
-- [ ] Biglietto: con `assets/downloads/biglietto-martina.pdf` presente il download funziona; se assente mostra **«Biglietto in preparazione»** e il download è disabilitato (nessun link fittizio).
-- [ ] Collegamenti: **Mappa → Guida** («Cosa fare qui») e **Guida → Mappa** («Vedi sulla mappa», solo con coordinate/destinazione appropriate) senza aggiungere pin POI all’itinerario.
-- [ ] Mappa stabile (Leaflet/OSM), responsive mobile/desktop, nessun errore JavaScript in console. Verifiche browser reali vanno eseguite e riportate quando effettuate.
+Suite: `tests/stability.spec.js`, `tests/tour-sheet-regression.spec.js` (aggiornate a cinque tappe) e `tests/ireland-v17.spec.js` (contenuti reali, sei giornate, easter egg, migrazione sessione, preferiti, asset, assenza errori JS). Il server di test è `tests/server.py` (threaded, per evitare reset delle richieste con più browser paralleli).
+
+Esito dell'ultima esecuzione: **20 test desktop e 20 test mobile superati**.
+
+## Privacy
+
+Le cartelle `Photos/` e `materials/` restano escluse da Git tramite `.gitignore`. Non aggiungere mai screenshot di voli, prenotazioni, PIN, documenti organizzativi o materiale non approvato. Verificare sempre i file in `git status` e `git diff --cached` prima di un commit.
