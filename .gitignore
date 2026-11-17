@@ -6,3 +6,10 @@ playwright.config.js
 test-results/
 playwright-report/
 blob-report/
+
+# Materiali privati e asset estratti (privacy: mai pubblicare su GitHub Pages)
+materials/
+
+# Fotografie originali e copie ottimizzate (privacy: mai pubblicare)
+photos/
+Photos/
