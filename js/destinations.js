@@ -1,17 +1,158 @@
-// DATI DIMOSTRATIVI — sostituire le tappe con le destinazioni reali quando confermate.
-// Le coordinate sono espresse come latitudine e longitudine (Leaflet).
+// siViaggiamo v1.7 — Ireland Edition
+// Fonte contenuti: materials/pizze.pdf (itinerario e annotazioni di viaggio).
+// Cinque destinazioni per la scoperta guidata; sei giornate nel diario (vedi `days`).
+// Le coordinate sono latitudine/longitudine (Leaflet) dei centri reali delle destinazioni.
+// La linea tratteggiata sulla mappa è un collegamento grafico, NON un percorso stradale calcolato.
 window.TRIP = {
-  name: "siViaggiamo",
-  celebrant: "Martina",
+  name: 'siViaggiamo',
+  celebrant: 'Martina',
+  edition: 'Irlanda · 5–10 maggio 2027',
   travelers: [
-    { name: "Martina", image: null }, // esempio: "assets/images/martina.jpg"
-    { name: "Seconda viaggiatrice", image: null } // esempio: "assets/images/amica.jpg"
+    {
+      name: 'Martina',
+      image: 'assets/images/avatar-martina.webp',
+      imagePosition: 'center 46%',
+      alt: 'Ritratto di Martina',
+    },
+    {
+      name: 'Lorenza',
+      image: 'assets/images/avatar-lorenza.webp',
+      imagePosition: 'center 49%',
+      alt: 'Ritratto di Lorenza',
+    },
   ],
+
+  // Ordine di rivelazione. Dublino compare una sola volta pur essendo rivisitata il 9 maggio.
   destinations: [
-    { id: "dublino", title: "Dublino", region: "Contea di Dublino", lat: 53.3498, lng: -6.2603, day: null, icon: "✈", color: "#295642", image: null, description: "Una prima tappa tra stradine vivaci, angoli caratteristici e tante cose da scoprire.", dedication: "Qui comincia il nostro viaggio. Sei pronta alla prima sorpresa irlandese?" },
-    { id: "galway", title: "Galway", region: "Contea di Galway", lat: 53.2707, lng: -9.0568, day: null, icon: "♫", color: "#d5a078", image: null, description: "Case colorate, musica per le strade e momenti da ricordare.", dedication: "Una città perfetta per perderci tra vicoli, risate e nuove scoperte." },
-    { id: "cliffs", title: "Cliffs of Moher", region: "Contea di Clare", lat: 52.9715, lng: -9.4309, day: null, icon: "≈", color: "#295642", image: null, description: "Scogliere spettacolari e panorami sull’oceano Atlantico.", dedication: "Per quei momenti che lasciano senza parole, nel senso più bello." },
-    { id: "killarney", title: "Killarney", region: "Contea di Kerry", lat: 52.0599, lng: -9.5044, day: null, icon: "♣", color: "#d5a078", image: null, description: "Laghi, paesaggi verdi e un finale tutto da scoprire.", dedication: "Finisce il percorso sulla mappa, ma i ricordi iniziano proprio qui." }
-  ]
+    {
+      id: 'dublino',
+      title: 'Dublino',
+      region: 'Contea di Dublino',
+      lat: 53.3468,
+      lng: -6.2645,
+      day: '5–6 e 9',
+      icon: '✈',
+      color: '#295642',
+      image: 'assets/images/dublino-hapenny-bridge.webp',
+      description: 'L’arrivo, il primo caffè e il ponte più famoso della città: tra cattedrali, vicoli e musica dal vivo si comincia a capire quanto sia bella l’Irlanda.',
+      dedication: 'Da qui parte tutto. Che la prima tappa sia l’inizio di un sacco di risate.',
+    },
+    {
+      id: 'glendalough',
+      title: 'Glendalough',
+      region: 'Contea di Wicklow',
+      lat: 53.0253,
+      lng: -6.3263,
+      day: '6',
+      icon: '☘',
+      color: '#5d8f6d',
+      image: 'assets/images/glendalough-lago-paesaggio.webp',
+      description: 'Laghi incastonati tra le montagne, boschi e passerelle di legno: una giornata di camminate lente, foto e pranzo al sacco.',
+      dedication: 'Un posto dove fermarsi un attimo e respirare. Il verde qui è davvero un regalo.',
+    },
+    {
+      id: 'galway',
+      title: 'Galway',
+      region: 'Contea di Galway',
+      lat: 53.2707,
+      lng: -9.0568,
+      day: '7–8',
+      icon: '♫',
+      color: '#d5a078',
+      image: 'assets/images/galway-quartiere-latino.webp',
+      description: 'Case colorate, mercato, artisti per strada e il Quartiere Latino: una città da attraversare senza fretta, con la musica che fa da colonna sonora.',
+      dedication: 'Per le stradine prese a caso e le chiacchiere che non finiscono mai.',
+    },
+    {
+      id: 'cliffs',
+      title: 'Cliffs of Moher',
+      region: 'Contea di Clare',
+      lat: 52.9715,
+      lng: -9.4309,
+      day: '8',
+      icon: '≈',
+      color: '#295642',
+      image: 'assets/images/cliffs-of-moher-panorama.webp',
+      description: 'Scogliere alte sull’Atlantico, vento e panorami che sembrano dipinti. Una di quelle viste che restano in mente molto dopo la foto.',
+      dedication: 'Per quei momenti che lasciano senza parole, nel senso più bello.',
+    },
+    {
+      id: 'howth',
+      title: 'Howth',
+      region: 'Contea di Dublino',
+      lat: 53.3893,
+      lng: -6.0487,
+      day: '9',
+      icon: '✦',
+      color: '#d5a078',
+      image: 'assets/images/howth-cliff-walk.webp',
+      description: 'Un villaggio di pescatori a un passo da Dublino: il porto, il faro, la passeggiata sulle scogliere e, chissà, qualche foca affacciata.',
+      dedication: 'L’ultima sorpresa sulla mappa, con il mare come cornice.',
+    },
+  ],
+
+  // Programma cronologico: sei giornate distinte dalle cinque destinazioni della mappa.
+  // Orari e collegamenti tratti dal programma di riferimento: indicazioni, non prenotazioni confermate.
+  days: [
+    {
+      id: 'giorno-1',
+      date: '5 maggio',
+      title: 'Arrivo a Dublino',
+      place: 'Dublino',
+      destinationId: 'dublino',
+      description: 'Atterraggio previsto alle 13:15, trasferimento verso il centro e sistemazione in hotel. Nel pomeriggio passeggiata tra St. Patrick’s Cathedral e Ha’penny Bridge; in serata, Temple Bar.',
+      activities: ['Arrivo previsto alle 13:15', 'Sistemazione in hotel', 'St. Patrick’s Cathedral e Ha’penny Bridge', 'Temple Bar in serata'],
+      travel: ['Aeroporto → centro città: collegamento bus indicato nel programma (linea da verificare)', 'Spostamenti urbani con Dublin Bus / Leap Card'],
+    },
+    {
+      id: 'giorno-2',
+      date: '6 maggio',
+      title: 'Escursione a Glendalough',
+      place: 'Glendalough',
+      destinationId: 'glendalough',
+      description: 'Giornata tra i laghi delle montagne di Wicklow. Upper Lake e Lower Lake, sentieri panoramici, The Spinc Walk e Poulanass Waterfall tra le possibilità. Pranzo al sacco e rientro a Dublino.',
+      activities: ['Upper Lake e Lower Lake', 'The Spinc Walk (percorso impegnativo, circa 3–4 ore)', 'Poulanass Waterfall', 'Pranzo al sacco'],
+      travel: ['St. Kevin’s Bus da St. Stephen’s Green North al Visitor Centre', 'Partenza e ritorno indicati dal programma: da riconfermare sui tempi ufficiali'],
+    },
+    {
+      id: 'giorno-3',
+      date: '7 maggio',
+      title: 'In treno a Galway',
+      place: 'Galway',
+      destinationId: 'galway',
+      description: 'Trasferimento in treno da Dublino a Galway e sistemazione in hotel. Pomeriggio tra Galway Market e il Quartiere Latino, con Galway Rafting come possibilità se coerente con il programma.',
+      activities: ['Galway Market', 'Quartiere Latino', 'Galway Rafting come attività facoltativa'],
+      travel: ['Irish Rail: Dublino Heuston → Galway Ceannt', 'Centro di Galway esplorabile a piedi'],
+    },
+    {
+      id: 'giorno-4',
+      date: '8 maggio',
+      title: 'Le Cliffs of Moher',
+      place: 'Cliffs of Moher',
+      destinationId: 'cliffs',
+      description: 'Escursione da Galway alle scogliere con il bus 350 secondo il programma di riferimento. Passeggiata sui punti panoramici, pranzo al sacco e rientro a Galway.',
+      activities: ['Passeggiata panoramica sulle scogliere', 'Pranzo al sacco', 'Rientro via Doolin secondo il programma'],
+      travel: ['Bus 350 da Galway Bus Station alle Cliffs of Moher', 'Rientro con i collegamenti locali da Doolin (verifica orari e fermate)'],
+    },
+    {
+      id: 'giorno-5',
+      date: '9 maggio',
+      title: 'Ritorno a Dublino e Howth',
+      place: 'Howth',
+      destinationId: 'howth',
+      description: 'Treno da Galway a Dublino, poi DART fino a Howth. Passeggiata nel porto, scorcio del faro e tratto della Cliff Walk, con la possibilità di avvistare foche.',
+      activities: ['Porto di Howth e faro', 'Howth Cliff Walk', 'Possibile avvistamento di foche'],
+      travel: ['Irish Rail: Galway Ceannt → Dublino Heuston', 'DART: Dublin Pearse → Howth Station'],
+    },
+    {
+      id: 'giorno-6',
+      date: '10 maggio',
+      title: 'Rientro in Italia',
+      place: 'Dublino',
+      destinationId: 'dublino',
+      description: 'Ultima mattina in Irlanda, partenza da Dublino e rientro in Italia. Il diario resta qui, con tutte le cartoline da rileggere.',
+      activities: ['Partenza da Dublino', 'Rientro in Italia'],
+      travel: ['Dublino → Italia: volo di rientro'],
+    },
+  ],
 };
-// La linea tratteggiata è un collegamento grafico, NON un percorso stradale calcolato.
