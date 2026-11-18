@@ -22,15 +22,11 @@ window.TRIP = {
     },
   ],
 
-  // Configurazione fotografica delle cartoline (v1.7.2).
-  // Ogni destinazione dichiara come va mostrata la propria immagine:
-  //   fit        object-fit (contain = immagine integrale, mai ritagliata)
-  //   position   object-position
-  //   aspect     rapporto d'aspetto del riquadro, scelto vicino a quello dell'originale
-  // I valori sono consumati da js/app.js come CSS custom properties: nessun override
-  // CSS specifico per destinazione, un'unica regola generica in css/style.css.
-  // Formati sorgente: Dublino 16:9, Glendalough 4:3, Galway 3:2,
-  // Cliffs of Moher 16:9, Howth ~16:10.
+  // Formato fotografico standard (v1.7.2): riquadro 16:9 a piena larghezza.
+  // Le copie in assets/images/postcards-16x9/ sono già 16:9, quindi non serve
+  // dichiarare fit/position/aspect: js/app.js usa i default contain/center/16:9.
+  // Glendalough è l'unica eccezione temporanea: l'asset disponibile è un collage
+  // e non viene ritagliato; resta 4:3 finché non arriva una foto singola approvata.
 
   // Ordine di rivelazione. Dublino compare una sola volta pur essendo rivisitata il 9 maggio.
   destinations: [
@@ -43,8 +39,7 @@ window.TRIP = {
       day: '5–6 e 9',
       icon: '✈',
       color: '#295642',
-      image: 'assets/images/dublino-hapenny-bridge.webp',
-      photo: { fit: 'contain', position: 'center', aspect: '16 / 9' },
+      image: 'assets/images/postcards-16x9/dublino-hapenny-bridge-16x9.webp',
       description: 'L’arrivo, il primo caffè e il ponte più famoso della città: tra cattedrali, vicoli e musica dal vivo si comincia a capire quanto sia bella l’Irlanda.',
       dedication: 'Da qui parte tutto. Che la prima tappa sia l’inizio di un sacco di risate.',
     },
@@ -58,7 +53,9 @@ window.TRIP = {
       icon: '☘',
       color: '#5d8f6d',
       image: 'assets/images/glendalough-lago-paesaggio.webp',
-      photo: { fit: 'contain', position: 'center', aspect: '4 / 3' },
+      // ECCEZIONE TEMPORANEA: collage, in attesa di una foto singola 16:9 approvata.
+      // Non produrre un ritaglio distruttivo: conserva il rapporto 4:3 dell'originale.
+      photo: { aspect: '4 / 3' },
       description: 'Laghi incastonati tra le montagne, boschi e passerelle di legno: una giornata di camminate lente, foto e pranzo al sacco.',
       dedication: 'Un posto dove fermarsi un attimo e respirare. Il verde qui è davvero un regalo.',
     },
@@ -71,8 +68,7 @@ window.TRIP = {
       day: '7–8',
       icon: '♫',
       color: '#d5a078',
-      image: 'assets/images/galway-quartiere-latino.webp',
-      photo: { fit: 'contain', position: 'center', aspect: '3 / 2' },
+      image: 'assets/images/postcards-16x9/galway-quartiere-latino-16x9.webp',
       description: 'Case colorate, mercato, artisti per strada e il Quartiere Latino: una città da attraversare senza fretta, con la musica che fa da colonna sonora.',
       dedication: 'Per le stradine prese a caso e le chiacchiere che non finiscono mai.',
     },
@@ -85,8 +81,7 @@ window.TRIP = {
       day: '8',
       icon: '≈',
       color: '#295642',
-      image: 'assets/images/cliffs-of-moher-panorama.webp',
-      photo: { fit: 'contain', position: 'center', aspect: '16 / 9' },
+      image: 'assets/images/postcards-16x9/cliffs-of-moher-panorama-16x9.webp',
       description: 'Scogliere alte sull’Atlantico, vento e panorami che sembrano dipinti. Una di quelle viste che restano in mente molto dopo la foto.',
       dedication: 'Per quei momenti che lasciano senza parole, nel senso più bello.',
     },
@@ -99,8 +94,7 @@ window.TRIP = {
       day: '9',
       icon: '✦',
       color: '#d5a078',
-      image: 'assets/images/howth-cliff-walk.webp',
-      photo: { fit: 'contain', position: 'center', aspect: '16 / 10' },
+      image: 'assets/images/postcards-16x9/howth-east-pier-lighthouse-16x9.webp',
       description: 'Un villaggio di pescatori a un passo da Dublino: il porto, il faro, la passeggiata sulle scogliere e, chissà, qualche foca affacciata.',
       dedication: 'L’ultima sorpresa sulla mappa, con il mare come cornice.',
     },

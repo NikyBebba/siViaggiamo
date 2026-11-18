@@ -15,12 +15,14 @@ const { test, expect } = require('@playwright/test');
 
 const HOME_PHOTO = /home-temple-bar\.webp/;
 
+// Quattro cartoline usano il riquadro standard 16:9 a piena larghezza.
+// Glendalough resta temporaneamente 4:3: l'asset è un collage e non è stato ritagliato.
 const STOPS = [
-  { title: 'Dublino', aspect: 16 / 9, natural: [1600, 900] },
-  { title: 'Glendalough', aspect: 4 / 3, natural: [1412, 1051] },
-  { title: 'Galway', aspect: 3 / 2, natural: [547, 365] },
-  { title: 'Cliffs of Moher', aspect: 16 / 9, natural: [1600, 900] },
-  { title: 'Howth', aspect: 16 / 10, natural: [1428, 895] },
+  { title: 'Dublino', aspect: 16 / 9, natural: [1600, 900], standard: true },
+  { title: 'Glendalough', aspect: 4 / 3, natural: [1412, 1051], standard: false },
+  { title: 'Galway', aspect: 16 / 9, natural: [547, 308], standard: true },
+  { title: 'Cliffs of Moher', aspect: 16 / 9, natural: [1600, 900], standard: true },
+  { title: 'Howth', aspect: 16 / 9, natural: [1450, 816], standard: true },
 ];
 
 async function openFresh(page) {
@@ -141,6 +143,10 @@ test.describe('v1.7.2 — Visual polish', () => {
     for (let i = 0; i < STOPS.length; i++) {
       const stop = STOPS[i];
       await expectTitle(page, stop.title);
+      await page.waitForFunction(() => {
+        const img = document.querySelector('.sheet-compact-thumb img');
+        return !!img && img.complete && img.naturalWidth > 0;
+      }, null, { timeout: 15000 });
 
       const compact = await page.locator('.sheet-compact-thumb img').evaluate((el) => ({
         w: el.naturalWidth,
@@ -153,24 +159,40 @@ test.describe('v1.7.2 — Visual polish', () => {
 
       await page.locator('#sheet-toggle').click();
       await expect(page.locator('#stop-sheet')).toHaveClass(/expanded/);
+      await page.waitForFunction(() => {
+        const img = document.querySelector('.sheet-img img');
+        return !!img && img.complete && img.naturalWidth > 0;
+      }, null, { timeout: 15000 });
 
       const expanded = await page.evaluate(() => {
         const wrap = document.querySelector('.sheet-img');
         const img = wrap.querySelector('img');
         const r = wrap.getBoundingClientRect();
+        const parent = wrap.parentElement.getBoundingClientRect();
         return {
           ratio: r.width / r.height,
+          width: r.width,
+          parentWidth: parent.width,
+          maxH: getComputedStyle(wrap).maxHeight,
           fit: getComputedStyle(img).objectFit,
           pos: getComputedStyle(img).objectPosition,
-          maxH: parseFloat(getComputedStyle(wrap).maxHeight),
           titleVisible: !!document.getElementById('sheet-title')?.getBoundingClientRect().height,
           desc: document.querySelector('.description')?.textContent || '',
         };
       });
       expect(expanded.fit).toBe('contain');
       expect(expanded.pos).toBe('50% 50%');
+      // Nessun max-height: larghezza 100% e aspect-ratio determinano l'altezza.
+      expect(expanded.maxH).toBe('none');
+      expect(expanded.width).toBeCloseTo(expanded.parentWidth, 1);
       expect(expanded.ratio).toBeCloseTo(stop.aspect, 2);
-      expect(expanded.maxH).toBeLessThanOrEqual(280);
+      if (stop.standard) {
+        expect(compact.w / compact.h).toBeCloseTo(16 / 9, 2);
+        expect(expanded.ratio).toBeCloseTo(16 / 9, 2);
+      } else {
+        // Eccezione dichiarata: collage Glendalough, nessun ritaglio generato.
+        expect(expanded.ratio).toBeCloseTo(4 / 3, 2);
+      }
       expect(expanded.titleVisible).toBe(true);
       expect(expanded.desc.trim().length).toBeGreaterThan(20);
 
@@ -282,6 +304,7 @@ test.describe('v1.7.2 — Visual polish', () => {
   test('Foto espanse realmente visibili: nessuna striscia da scroll', async ({ page }) => {
     await firstStop(page);
     for (let i = 0; i < STOPS.length; i++) {
+      await expectTitle(page, STOPS[i].title);
       await page.locator('#sheet-toggle').click();
       await expect(page.locator('#stop-sheet')).toHaveClass(/expanded/);
       await page.waitForTimeout(150);
@@ -303,6 +326,10 @@ test.describe('v1.7.2 — Visual polish', () => {
       expect(m.fit).toBe('contain');
       expect(m.visiblePct, 'foto tagliata a striscia dallo scroll').toBeGreaterThan(0.85);
       expect(m.scrollTop, 'la sheet deve partire dall\'alto').toBeLessThanOrEqual(1);
+      expect(m.boxRatio, 'geometria della cartolina').toBeCloseTo(STOPS[i].aspect, 2);
+      if (STOPS[i].standard) {
+        expect(m.naturalRatio, 'asset non standardizzato in 16:9').toBeCloseTo(16 / 9, 2);
+      }
       expect(Math.abs(m.boxRatio - m.naturalRatio), 'contenitore sproporzionato').toBeLessThan(0.03);
       if (i < STOPS.length - 1) await page.locator('#sheet-advance').click();
     }
@@ -311,6 +338,7 @@ test.describe('v1.7.2 — Visual polish', () => {
   test('Miniature compatte: rapporto coerente e nessuna banda vuota', async ({ page }) => {
     await firstStop(page);
     for (let i = 0; i < STOPS.length; i++) {
+      await expectTitle(page, STOPS[i].title);
       await page.waitForFunction(() => {
         const img = document.querySelector('.sheet-compact-thumb img');
         return !!img && img.complete && img.naturalWidth > 0;
@@ -325,7 +353,11 @@ test.describe('v1.7.2 — Visual polish', () => {
         };
       });
       expect(m.fit).toBe('contain');
-      expect(Math.abs(m.boxRatio - m.naturalRatio), 'miniature schiacciata o con bande vuote').toBeLessThan(0.12);
+      expect(m.boxRatio, 'miniature con geometria diversa dal riquadro').toBeCloseTo(STOPS[i].aspect, 2);
+      if (STOPS[i].standard) {
+        expect(m.naturalRatio, 'miniature non 16:9').toBeCloseTo(16 / 9, 2);
+      }
+      expect(Math.abs(m.boxRatio - m.naturalRatio), 'miniature schiacciata o con bande vuote').toBeLessThan(0.03);
       if (i < STOPS.length - 1) await page.locator('#sheet-advance').click();
     }
   });

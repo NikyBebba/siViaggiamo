@@ -541,8 +541,8 @@
     const isLast = state.revealed >= stops.length;
     const dayLabel = s.day ? `<span class="postcard-stamp">Giorno ${escapeHTML(s.day)}</span>` : '<span class="postcard-stamp">Cartolina</span>';
     const hasImage = !!s.image;
-    // Configurazione fotografica dichiarata in js/destinations.js: un'unica sorgente
-    // di verità, passata al CSS tramite custom properties (nessun override sparso).
+    // Standard 16:9: i default contain/center/16:9 valgono per tutte le cartoline.
+    // Solo l'eccezione temporanea Glendalough dichiara un aspect diverso in destinations.js.
     const photo = s.photo || {};
     const photoStyle = [
       `--card-fit:${escapeHTML(photo.fit || 'contain')}`,
