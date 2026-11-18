@@ -157,20 +157,23 @@ test.describe('siViaggiamo v1.7 — Ireland Edition', () => {
     await expect(page.locator('#howth-easter-egg')).toBeVisible();
     await expect(page.locator('#easter-egg-title')).toHaveText('Avvistamento raro a Howth 🦭');
     await expect(page.locator('#easter-egg-text')).toHaveText('Le autorità locali segnalano due esemplari particolarmente sospetti sulle coste irlandesi.');
-    await expect(page.locator('#easter-egg-toggle')).toHaveText('Scopri chi sono');
+    await expect(page.locator('#easter-egg-toggle')).toHaveText('Ops… chi abbiamo trovato? 🦭');
+    await expect(page.locator('#easter-egg-toggle')).toHaveAttribute('aria-controls', 'seal-dialog');
     await expect(page.locator('#easter-egg-toggle')).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('#easter-egg-reveal')).toBeHidden();
+    await expect(page.locator('#seal-dialog')).toBeHidden();
 
-    // Rivelazione tramite bottone (accessibile da tastiera).
+    // Rivelazione tramite bottone (accessibile da tastiera) nello stesso dialog della cartolina.
     await page.locator('#easter-egg-toggle').focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('#easter-egg-reveal')).toBeVisible();
+    await expect(page.locator('#seal-dialog')).toBeVisible();
     await expect(page.locator('#easter-egg-toggle')).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('#easter-egg-reveal img')).toHaveAttribute('src', /martina-foche-meme\.webp/);
+    await expect(page.locator('#seal-photo-img')).toHaveAttribute('src', /martina-foche-meme\.webp/);
+    await expect(page.locator('#seal-dialog-title')).toHaveText('OPS… BECCATE! 🦭');
 
     // Escape richiude, nessun overlay permanente.
     await page.keyboard.press('Escape');
-    await expect(page.locator('#easter-egg-reveal')).toBeHidden();
+    await expect(page.locator('#seal-dialog')).toBeHidden();
+    await expect(page.locator('#seal-scrim')).toBeHidden();
     await expect(page.locator('#easter-egg-toggle')).toHaveAttribute('aria-expanded', 'false');
 
     // Uscendo dalla Guida l'uovo sparisce e non è una destinazione.

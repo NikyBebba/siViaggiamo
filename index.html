@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,20,1;9..144,700,20,1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="css/style.css?v=1.7" />
+  <link rel="stylesheet" href="css/style.css?v=1.7.1" />
 </head>
 <body>
   <div class="shell">
@@ -102,11 +102,7 @@
             <p class="eyebrow left">UNA PICCOLA SORPRESA · HOWTH</p>
             <h3 id="easter-egg-title">Avvistamento raro a Howth 🦭</h3>
             <p class="easter-egg-text" id="easter-egg-text">Le autorità locali segnalano due esemplari particolarmente sospetti sulle coste irlandesi.</p>
-            <button type="button" id="easter-egg-toggle" class="easter-egg-btn" aria-expanded="false" aria-controls="easter-egg-reveal">Scopri chi sono</button>
-            <div class="easter-egg-reveal" id="easter-egg-reveal" hidden>
-              <img src="assets/images/martina-foche-meme.webp" alt="Le due viaggiatrici raffigurate come foche su un prato vicino all’acqua" loading="lazy" />
-              <p class="easter-egg-caption">Esemplari rarissimi, avvistati solo in compagnia di Martina e Lorenza.</p>
-            </div>
+            <button type="button" id="easter-egg-toggle" class="easter-egg-btn" aria-haspopup="dialog" aria-controls="seal-dialog" aria-expanded="false">Ops… chi abbiamo trovato? 🦭</button>
           </div>
         </section>
       </section>
@@ -159,8 +155,22 @@
       </div>
     </div>
   </div>
+  <div class="seal-scrim" id="seal-scrim" hidden></div>
+  <section class="seal-dialog" id="seal-dialog" role="dialog" aria-modal="true" aria-labelledby="seal-dialog-title" aria-describedby="seal-dialog-text" aria-hidden="true" hidden>
+    <div class="seal-card" role="document">
+      <button type="button" class="seal-close" id="seal-close" aria-label="Chiudi la sorpresa">×</button>
+      <span class="seal-tape" aria-hidden="true"></span>
+      <p class="eyebrow">AVVISTAMENTO STRAORDINARIO</p>
+      <h3 id="seal-dialog-title">OPS… BECCATE! 🦭</h3>
+      <p class="seal-text" id="seal-dialog-text">Due rarissime foche sono state individuate sulla costa irlandese. Gli esperti sostengono che somiglino in modo inquietante a Martina e Lorenza.</p>
+      <figure class="seal-photo">
+        <img id="seal-photo-img" src="assets/images/martina-foche-meme.webp" alt="Martina e Lorenza raffigurate come due foche sul prato, davanti all’acqua" loading="lazy" />
+      </figure>
+      <button type="button" class="primary-btn seal-return" id="seal-return">Torniamo al viaggio →</button>
+    </div>
+  </section>
   <script src="js/destinations.js?v=1.7"></script>
   <script src="js/guide-data.js?v=1.7"></script>
-  <script src="js/app.js?v=1.7"></script>
+  <script src="js/app.js?v=1.7.1"></script>
 </body>
 </html>

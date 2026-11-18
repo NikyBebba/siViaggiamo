@@ -82,6 +82,8 @@
   let tileErrorNotified = false;
   let travelToken = 0;
   let completionTimer = 0;
+  let sealReturnFocus = null;
+  let sealPreviousOverflow = '';
   const markers = [];
   const coords = stops.map((s) => [s.lat, s.lng]);
   const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -217,6 +219,8 @@
   }
 
   function goto(id) {
+    // Il dialog è modale: nessun cambio vista può avvenire mentre è aperto.
+    closeSealSurprise({ restoreFocus: false });
     const fromMap = isMapViewActive();
     if (fromMap && id !== 'map-view') {
       cancelTravel();
@@ -550,6 +554,12 @@
     const navActions = inGuidedReveal ? '' : `<button type="button" id="prev-stop">← Precedente</button><button type="button" id="next-stop">Successiva →</button>`;
     const toggleLabel = expanded ? 'Mostra meno' : 'Espandi cartolina';
     const brief = escapeHTML((s.description || '').slice(0, 90) + ((s.description || '').length > 90 ? '…' : ''));
+    // Solo Howth: richiamo compatto, sempre visibile, senza sostituire l'avanzamento.
+    const sealTeaser = s.id === 'howth' ? `<div class="seal-teaser">
+          <p class="seal-teaser-title">Avvistamento sospetto! 🦭</p>
+          <p class="seal-teaser-text">Pare che sulle coste di Howth siano stati avvistati due esemplari piuttosto familiari…</p>
+          <button type="button" id="sheet-seal-surprise" class="seal-teaser-btn" aria-haspopup="dialog" aria-controls="seal-dialog" aria-expanded="false">Ops… chi abbiamo trovato? 🦭</button>
+        </div>` : '';
 
     if (!expanded) {
       return `<div class="sheet-postcard compact">
@@ -561,6 +571,7 @@
             <p class="sheet-brief">${brief}</p>
           </div>
         </div>
+        ${sealTeaser}
         <div class="sheet-compact-actions">
           ${primary}
           <button type="button" id="sheet-toggle" class="sheet-toggle-btn" aria-expanded="false">${toggleLabel} ↓</button>
@@ -579,6 +590,7 @@
         <p class="region">⌖ ${escapeHTML(s.region || 'Irlanda')}, Irlanda</p>
         <p class="description">${escapeHTML(s.description || '')}</p>
         <div class="dedication"><span class="dedication-tape" aria-hidden="true"></span><strong>♡ Una dedica per te</strong>${escapeHTML(s.dedication || '')}</div>
+        ${sealTeaser}
         ${primary}
         <div class="sheet-secondary-actions">
           <a href="${mapsURL}" target="_blank" rel="noopener noreferrer">Apri su Google Maps ↗</a>
@@ -602,6 +614,7 @@
       }, { once: true });
     }
     $('sheet-advance')?.addEventListener('click', () => { closeSheet({ restoreFocus: false }); advanceTour(); });
+    $('sheet-seal-surprise')?.addEventListener('click', (ev) => openSealSurprise(ev.currentTarget));
     $('prev-stop')?.addEventListener('click', () => { state.sheetExpanded = false; openSheet((index - 1 + stops.length) % stops.length, { rerender: true }); });
     $('next-stop')?.addEventListener('click', () => { state.sheetExpanded = false; openSheet((index + 1) % stops.length, { rerender: true }); });
     $('sheet-toggle')?.addEventListener('click', () => {
@@ -711,6 +724,65 @@
     el.hidden = true;
     el.setAttribute('aria-hidden', 'true');
     if (restoreFocus && isMapViewActive()) $('guide-next')?.focus?.();
+  }
+
+  // Sorpresa delle foche: un solo dialog, aperto sia dalla cartolina di Howth
+  // sia dalla Guida. Non tocca mai lo stato del viaggio né la cartolina aperta.
+  function sealIsOpen() {
+    const dialog = $('seal-dialog');
+    return !!dialog && !dialog.hidden;
+  }
+
+  function sealFocusables() {
+    const dialog = $('seal-dialog');
+    if (!dialog) return [];
+    return Array.from(dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter((el) => !el.disabled && el.getClientRects().length > 0);
+  }
+
+  function openSealSurprise(trigger) {
+    const dialog = $('seal-dialog');
+    const scrim = $('seal-scrim');
+    if (!dialog || !scrim || sealIsOpen()) return;
+    sealReturnFocus = trigger && typeof trigger.focus === 'function' ? trigger : document.activeElement;
+    sealPreviousOverflow = document.body.style.overflow;
+    scrim.hidden = false;
+    dialog.hidden = false;
+    dialog.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    trigger?.setAttribute?.('aria-expanded', 'true');
+    ($('seal-return') || $('seal-close') || dialog).focus?.();
+  }
+
+  function closeSealSurprise({ restoreFocus = true } = {}) {
+    const dialog = $('seal-dialog');
+    const scrim = $('seal-scrim');
+    if (!dialog || !scrim || !sealIsOpen()) return;
+    dialog.hidden = true;
+    scrim.hidden = true;
+    dialog.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = sealPreviousOverflow;
+    sealReturnFocus?.setAttribute?.('aria-expanded', 'false');
+    const target = sealReturnFocus;
+    sealReturnFocus = null;
+    sealPreviousOverflow = '';
+    if (restoreFocus && target && target.isConnected && typeof target.focus === 'function') target.focus();
+  }
+
+  function trapSealFocus(ev) {
+    const dialog = $('seal-dialog');
+    const items = sealFocusables();
+    if (!dialog || !items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    const outside = !dialog.contains(document.activeElement);
+    if (ev.shiftKey && (document.activeElement === first || outside)) {
+      ev.preventDefault();
+      last.focus();
+    } else if (!ev.shiftKey && (document.activeElement === last || outside)) {
+      ev.preventDefault();
+      first.focus();
+    }
   }
 
   function acknowledgeCompletion() {
@@ -1018,11 +1090,9 @@
   }
 
   // Easter egg: solo nella Guida filtrata per Howth, mai immagine principale né nuova tappa.
+  // Il contenuto vivo è l'unico dialog condiviso con la cartolina di Howth.
   function resetEasterEggReveal() {
-    const reveal = $('easter-egg-reveal');
-    const toggle = $('easter-egg-toggle');
-    if (reveal) reveal.hidden = true;
-    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    $('easter-egg-toggle')?.setAttribute('aria-expanded', 'false');
   }
 
   function updateEasterEgg() {
@@ -1192,29 +1262,27 @@
   $('close-sheet')?.addEventListener('click', () => closeSheet());
   $('sheet-overlay')?.addEventListener('click', () => closeSheet());
 
-  $('easter-egg-toggle')?.addEventListener('click', () => {
-    const reveal = $('easter-egg-reveal');
-    const toggle = $('easter-egg-toggle');
-    if (!reveal || !toggle) return;
-    const willExpand = reveal.hidden;
-    reveal.hidden = !willExpand;
-    toggle.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
-  });
+  $('easter-egg-toggle')?.addEventListener('click', (ev) => openSealSurprise(ev.currentTarget));
+  $('seal-close')?.addEventListener('click', () => closeSealSurprise());
+  $('seal-return')?.addEventListener('click', () => closeSealSurprise());
+  $('seal-scrim')?.addEventListener('click', () => closeSealSurprise());
 
   $('finale-close')?.addEventListener('click', () => closeFinale());
   $('finale-map')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); if (state.mode === 'completed') { state.completionAcknowledged = true; state.mode = 'free-exploration'; saveJourneyState(); } updateUI(); if (isMapViewActive()) fitRoute(true); });
   $('finale-message')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); goto('message'); });
 
   document.addEventListener('keydown', (ev) => {
+    // Il dialog delle foche ha priorità assoluta: trap del focus e Escape dedicato.
+    if (sealIsOpen()) {
+      if (ev.key === 'Escape') { ev.preventDefault(); closeSealSurprise(); }
+      else if (ev.key === 'Tab') trapSealFocus(ev);
+      return;
+    }
     const open = sheetIsOpen();
     const finaleOpen = $('journey-finale') && !$('journey-finale').hidden;
     if (ev.key === 'Escape') {
       if (open) closeSheet();
       else if (finaleOpen) closeFinale();
-      else {
-        const eggReveal = $('easter-egg-reveal');
-        if (eggReveal && !eggReveal.hidden && getActiveViewId() === 'guide-view') resetEasterEggReveal();
-      }
       return;
     }
     if (open && isMapViewActive() && isJourneyCompleted() && state.mode !== 'stop-revealed') {
@@ -1225,6 +1293,7 @@
 
   // init
   $('journey-finale')?.setAttribute('aria-hidden', 'true');
+  $('seal-dialog')?.setAttribute('aria-hidden', 'true');
   // normalizza stato caricato
   if (isJourneyCompleted()) {
     state.revealed = stops.length;
