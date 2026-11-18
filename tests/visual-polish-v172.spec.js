@@ -278,4 +278,91 @@ test.describe('v1.7.2 — Visual polish', () => {
     });
     expect(revealed).toBe(5);
   });
+
+  test('Foto espanse realmente visibili: nessuna striscia da scroll', async ({ page }) => {
+    await firstStop(page);
+    for (let i = 0; i < STOPS.length; i++) {
+      await page.locator('#sheet-toggle').click();
+      await expect(page.locator('#stop-sheet')).toHaveClass(/expanded/);
+      await page.waitForTimeout(150);
+      const m = await page.evaluate(() => {
+        const sheet = document.getElementById('stop-sheet');
+        const sr = sheet.getBoundingClientRect();
+        const topbar = sheet.querySelector('.sheet-topbar').getBoundingClientRect();
+        const box = document.querySelector('.sheet-img').getBoundingClientRect();
+        const img = document.querySelector('.sheet-img img');
+        const visibleH = Math.max(0, Math.min(box.bottom, sr.bottom) - Math.max(box.top, topbar.bottom));
+        return {
+          visiblePct: visibleH / box.height,
+          scrollTop: sheet.scrollTop,
+          boxRatio: box.width / box.height,
+          naturalRatio: img.naturalWidth / img.naturalHeight,
+          fit: getComputedStyle(img).objectFit,
+        };
+      });
+      expect(m.fit).toBe('contain');
+      expect(m.visiblePct, 'foto tagliata a striscia dallo scroll').toBeGreaterThan(0.85);
+      expect(m.scrollTop, 'la sheet deve partire dall\'alto').toBeLessThanOrEqual(1);
+      expect(Math.abs(m.boxRatio - m.naturalRatio), 'contenitore sproporzionato').toBeLessThan(0.03);
+      if (i < STOPS.length - 1) await page.locator('#sheet-advance').click();
+    }
+  });
+
+  test('Miniature compatte: rapporto coerente e nessuna banda vuota', async ({ page }) => {
+    await firstStop(page);
+    for (let i = 0; i < STOPS.length; i++) {
+      await page.waitForFunction(() => {
+        const img = document.querySelector('.sheet-compact-thumb img');
+        return !!img && img.complete && img.naturalWidth > 0;
+      }, null, { timeout: 15000 });
+      const m = await page.evaluate(() => {
+        const thumb = document.querySelector('.sheet-compact-thumb').getBoundingClientRect();
+        const img = document.querySelector('.sheet-compact-thumb img');
+        return {
+          boxRatio: thumb.width / thumb.height,
+          naturalRatio: img.naturalWidth / img.naturalHeight,
+          fit: getComputedStyle(img).objectFit,
+        };
+      });
+      expect(m.fit).toBe('contain');
+      expect(Math.abs(m.boxRatio - m.naturalRatio), 'miniature schiacciata o con bande vuote').toBeLessThan(0.12);
+      if (i < STOPS.length - 1) await page.locator('#sheet-advance').click();
+    }
+  });
+
+  test('Stella decorativa fuori dalla superficie fotografica', async ({ page }) => {
+    await firstStop(page);
+    await page.locator('#sheet-toggle').click();
+    await expect(page.locator('#stop-sheet')).toHaveClass(/expanded/);
+    const m = await page.evaluate(() => {
+      const photo = document.querySelector('.sheet-img').getBoundingClientRect();
+      const star = document.querySelector('.sheet-sticker').getBoundingClientRect();
+      const meta = document.querySelector('.postcard-meta').getBoundingClientRect();
+      const el = document.querySelector('.sheet-sticker');
+      return {
+        overlap: !(star.right < photo.left || star.left > photo.right || star.bottom < photo.top || star.top > photo.bottom),
+        inMeta: star.left >= meta.left && star.right <= meta.right && star.top >= meta.top && star.bottom <= meta.bottom,
+        aria: el.getAttribute('aria-hidden'),
+        pointer: getComputedStyle(el).pointerEvents,
+      };
+    });
+    expect(m.overlap).toBe(false);
+    expect(m.inMeta).toBe(true);
+    expect(m.aria).toBe('true');
+    expect(m.pointer).toBe('none');
+  });
+
+  test('Home pulita: nessun avatar duplicato e spaziatura equilibrata', async ({ page }) => {
+    await openFresh(page);
+    await expect(page.locator('#home .travelers')).toHaveCount(0);
+    await expect(page.locator('#home .heart-between')).toHaveCount(0);
+    await expect(page.locator('.hero-photo')).toBeVisible();
+    await expect(page.locator('.hero-label')).toContainText('L’IRLANDA CI ASPETTA');
+    const gap = await page.evaluate(() => Math.round(
+      document.querySelector('.home-note').getBoundingClientRect().top -
+      document.querySelector('.hero-art').getBoundingClientRect().bottom
+    ));
+    expect(gap).toBeGreaterThan(10);
+    expect(gap).toBeLessThan(60);
+  });
 });

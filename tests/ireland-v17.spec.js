@@ -54,19 +54,33 @@ async function startOnMap(page) {
 }
 
 test.describe('siViaggiamo v1.7 — Ireland Edition', () => {
-  test('Home: containenti reali, avatar fotografici e CTA dinamico', async ({ page }) => {
+  test('Home: foto Temple Bar, contenitori reali e CTA dinamico', async ({ page }) => {
     await openFresh(page);
     await expect(page.locator('#home')).toContainText(/Irlanda · 5–10 maggio 2027/);
     await expect(page.locator('#home')).toContainText(/Martina e Lorenza/);
     await expect(page.locator('#start-btn')).toContainText('Scopri la sorpresa');
 
-    const avatars = await page.locator('.friends .avatar img, #home .travelers .avatar img').evaluateAll((imgs) => imgs.map((img) => ({
+    // La Home non duplica più i soggetti della foto principale con gli avatar.
+    await expect(page.locator('#home .travelers')).toHaveCount(0);
+    const photo = await page.locator('.hero-photo').evaluate((img) => ({
+      src: img.getAttribute('src'),
+      w: img.naturalWidth,
+      h: img.naturalHeight,
+      fit: getComputedStyle(img).objectFit,
+    }));
+    expect(photo.src).toMatch(/home-temple-bar\.webp/);
+    expect(photo.w).toBe(1536);
+    expect(photo.h).toBe(1024);
+    expect(photo.fit).toBe('cover');
+
+    // Gli avatar restano nella topbar (e negli asset, riutilizzabili altrove).
+    const avatars = await page.locator('.friends .avatar img').evaluateAll((imgs) => imgs.map((img) => ({
       src: img.getAttribute('src') || '',
       width: img.naturalWidth,
       objectFit: getComputedStyle(img).objectFit,
       alt: img.getAttribute('alt') || '',
     })));
-    expect(avatars).toHaveLength(4);
+    expect(avatars).toHaveLength(2);
     avatars.forEach((a) => {
       expect(a.width, `avatar non caricato: ${a.src}`).toBeGreaterThan(0);
       expect(a.objectFit).toBe('cover');

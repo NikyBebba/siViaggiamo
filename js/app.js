@@ -590,10 +590,9 @@
     return `<div class="sheet-postcard expanded">
       <div class="sheet-img" data-icon="${escapeHTML(s.icon || '☘')}" style="background:linear-gradient(140deg,${escapeHTML(s.color || '#295642')},#b7d3b3);${photoStyle}">
         ${fullPhoto}
-        <span class="sheet-sticker" aria-hidden="true">✦</span>
       </div>
       <div class="sheet-body">
-        <div class="postcard-meta">${dayLabel}<span class="stop-tag">TAPPA N. ${String(index + 1).padStart(2, '0')}</span></div>
+        <div class="postcard-meta">${dayLabel}<span class="stop-tag">TAPPA N. ${String(index + 1).padStart(2, '0')}</span><span class="sheet-sticker" aria-hidden="true">✦</span></div>
         <h3 id="sheet-title">${escapeHTML(s.title)}</h3>
         <p class="region">⌖ ${escapeHTML(s.region || 'Irlanda')}, Irlanda</p>
         <p class="description">${escapeHTML(s.description || '')}</p>
@@ -628,9 +627,13 @@
     $('sheet-toggle')?.addEventListener('click', () => {
       state.sheetExpanded = !state.sheetExpanded;
       $('sheet-content').innerHTML = sheetHTML(index, state.sheetExpanded);
-      $('stop-sheet')?.classList.toggle('expanded', state.sheetExpanded);
+      const sheet = $('stop-sheet');
+      sheet?.classList.toggle('expanded', state.sheetExpanded);
       bindSheetEvents(index);
-      $('sheet-toggle')?.focus();
+      // Il focus senza preventScroll faceva scorrere la sheet fino al pulsante
+      // in fondo, nascondendo quasi tutta la fotografia: si riparte sempre dall'alto.
+      $('sheet-toggle')?.focus({ preventScroll: true });
+      if (sheet) sheet.scrollTop = 0;
     });
     $('sheet-open-guide')?.addEventListener('click', () => {
       const destId = $('sheet-open-guide')?.dataset.destId;
@@ -692,6 +695,7 @@
     sheet.classList.toggle('tour-mode', inGuidedReveal);
     sheet.classList.toggle('expanded', state.sheetExpanded);
     sheet.classList.add('open');
+    sheet.scrollTop = 0;
     sheet.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = inGuidedReveal ? '' : 'hidden';
 

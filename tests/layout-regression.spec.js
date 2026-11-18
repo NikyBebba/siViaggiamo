@@ -53,9 +53,11 @@ async function openFirstPostcard(page) {
 }
 
 test.describe('Layout v1.7 — avatar e navigazione pulita', () => {
-  test('avatar: riempiono il cerchio, object-fit cover e posizioni individuali', async ({ page }) => {
+  test('avatar della topbar: riempiono il cerchio, object-fit cover e posizioni individuali', async ({ page }) => {
     await openFresh(page);
-    const avatars = await page.locator('#home .travelers .avatar').evaluateAll((els) => els.map((el) => {
+    // La Home non contiene più il blocco duplicato di avatar + cuore.
+    await expect(page.locator('#home .travelers')).toHaveCount(0);
+    const avatars = await page.locator('.friends .avatar').evaluateAll((els) => els.map((el) => {
       const img = el.querySelector('img');
       const ir = img.getBoundingClientRect();
       const cs = getComputedStyle(img);
