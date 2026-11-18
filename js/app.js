@@ -542,7 +542,7 @@
     const dayLabel = s.day ? `<span class="postcard-stamp">Giorno ${escapeHTML(s.day)}</span>` : '<span class="postcard-stamp">Cartolina</span>';
     const hasImage = !!s.image;
     // Standard 16:9: i default contain/center/16:9 valgono per tutte le cartoline.
-    // Solo l'eccezione temporanea Glendalough dichiara un aspect diverso in destinations.js.
+    // Nessuna destinazione dichiara più un aspect diverso in destinations.js.
     const photo = s.photo || {};
     const photoStyle = [
       `--card-fit:${escapeHTML(photo.fit || 'contain')}`,

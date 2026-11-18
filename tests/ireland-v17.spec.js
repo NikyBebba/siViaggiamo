@@ -11,11 +11,18 @@ const SIGNATURE = 'dublino|glendalough|galway|cliffs|howth';
 const PUBLIC_ASSETS = [
   'assets/images/avatar-martina.webp',
   'assets/images/avatar-lorenza.webp',
-  'assets/images/postcards-16x9/dublino-hapenny-bridge-16x9.webp',
-  'assets/images/postcards-16x9/cliffs-of-moher-panorama-16x9.webp',
+  // Cartoline definitive 16:9 fornite dal Product Owner
+  'assets/images/postcards-16x9/dublino-samuel-beckett-16x9.webp',
+  'assets/images/postcards-16x9/glendalough-upper-lake-16x9.webp',
+  'assets/images/postcards-16x9/galway-latin-quarter-16x9.webp',
+  'assets/images/postcards-16x9/cliffs-of-moher-16x9.webp',
+  'assets/images/postcards-16x9/howth-baily-lighthouse-16x9.webp',
+  // Immagini ancora usate dalla Guida e dall'easter egg
+  'assets/images/dublino-hapenny-bridge.webp',
+  'assets/images/cliffs-of-moher-panorama.webp',
   'assets/images/glendalough-lago-paesaggio.webp',
-  'assets/images/postcards-16x9/galway-quartiere-latino-16x9.webp',
-  'assets/images/postcards-16x9/howth-east-pier-lighthouse-16x9.webp',
+  'assets/images/galway-quartiere-latino.webp',
+  'assets/images/howth-cliff-walk.webp',
   'assets/images/galway-market-insegna.webp',
   'assets/images/howth-east-pier-lighthouse.webp',
   'assets/images/martina-foche-meme.webp',

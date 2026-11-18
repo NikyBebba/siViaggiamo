@@ -22,11 +22,10 @@ window.TRIP = {
     },
   ],
 
-  // Formato fotografico standard (v1.7.2): riquadro 16:9 a piena larghezza.
-  // Le copie in assets/images/postcards-16x9/ sono già 16:9, quindi non serve
-  // dichiarare fit/position/aspect: js/app.js usa i default contain/center/16:9.
-  // Glendalough è l'unica eccezione temporanea: l'asset disponibile è un collage
-  // e non viene ritagliato; resta 4:3 finché non arriva una foto singola approvata.
+  // Formato fotografico standard (v1.7.2): tutte le cartoline usano un riquadro
+  // 16:9 a piena larghezza. Le cinque copie definitive sono in
+  // assets/images/postcards-16x9/ e sono già 16:9, quindi non serve dichiarare
+  // fit/position/aspect: js/app.js usa i default contain/center/16:9.
 
   // Ordine di rivelazione. Dublino compare una sola volta pur essendo rivisitata il 9 maggio.
   destinations: [
@@ -39,7 +38,7 @@ window.TRIP = {
       day: '5–6 e 9',
       icon: '✈',
       color: '#295642',
-      image: 'assets/images/postcards-16x9/dublino-hapenny-bridge-16x9.webp',
+      image: 'assets/images/postcards-16x9/dublino-samuel-beckett-16x9.webp',
       description: 'L’arrivo, il primo caffè e il ponte più famoso della città: tra cattedrali, vicoli e musica dal vivo si comincia a capire quanto sia bella l’Irlanda.',
       dedication: 'Da qui parte tutto. Che la prima tappa sia l’inizio di un sacco di risate.',
     },
@@ -52,10 +51,7 @@ window.TRIP = {
       day: '6',
       icon: '☘',
       color: '#5d8f6d',
-      image: 'assets/images/glendalough-lago-paesaggio.webp',
-      // ECCEZIONE TEMPORANEA: collage, in attesa di una foto singola 16:9 approvata.
-      // Non produrre un ritaglio distruttivo: conserva il rapporto 4:3 dell'originale.
-      photo: { aspect: '4 / 3' },
+      image: 'assets/images/postcards-16x9/glendalough-upper-lake-16x9.webp',
       description: 'Laghi incastonati tra le montagne, boschi e passerelle di legno: una giornata di camminate lente, foto e pranzo al sacco.',
       dedication: 'Un posto dove fermarsi un attimo e respirare. Il verde qui è davvero un regalo.',
     },
@@ -68,7 +64,7 @@ window.TRIP = {
       day: '7–8',
       icon: '♫',
       color: '#d5a078',
-      image: 'assets/images/postcards-16x9/galway-quartiere-latino-16x9.webp',
+      image: 'assets/images/postcards-16x9/galway-latin-quarter-16x9.webp',
       description: 'Case colorate, mercato, artisti per strada e il Quartiere Latino: una città da attraversare senza fretta, con la musica che fa da colonna sonora.',
       dedication: 'Per le stradine prese a caso e le chiacchiere che non finiscono mai.',
     },
@@ -81,7 +77,7 @@ window.TRIP = {
       day: '8',
       icon: '≈',
       color: '#295642',
-      image: 'assets/images/postcards-16x9/cliffs-of-moher-panorama-16x9.webp',
+      image: 'assets/images/postcards-16x9/cliffs-of-moher-16x9.webp',
       description: 'Scogliere alte sull’Atlantico, vento e panorami che sembrano dipinti. Una di quelle viste che restano in mente molto dopo la foto.',
       dedication: 'Per quei momenti che lasciano senza parole, nel senso più bello.',
     },
@@ -94,7 +90,7 @@ window.TRIP = {
       day: '9',
       icon: '✦',
       color: '#d5a078',
-      image: 'assets/images/postcards-16x9/howth-east-pier-lighthouse-16x9.webp',
+      image: 'assets/images/postcards-16x9/howth-baily-lighthouse-16x9.webp',
       description: 'Un villaggio di pescatori a un passo da Dublino: il porto, il faro, la passeggiata sulle scogliere e, chissà, qualche foca affacciata.',
       dedication: 'L’ultima sorpresa sulla mappa, con il mare come cornice.',
     },
