@@ -122,7 +122,9 @@ test.describe('siViaggiamo v1.7 — Ireland Edition', () => {
   test('Mappa: esattamente cinque pin in esplorazione libera', async ({ page }) => {
     await startOnMap(page);
     await page.locator('#guide-skip').click(); // Esplora liberamente
-    await expect(page.locator('#journey-guide')).toContainText(/Mappa libera|Viaggio · 5\/5/i);
+    await expect(page.locator('#guide-skip')).toHaveText('Rivivi ↺');
+    await expect(page.locator('#journey-guide')).toContainText('5 tappe scoperte');
+    await expect(page.locator('#journey-guide')).not.toContainText(/Mappa libera|Mostra tutto/i);
     await expect(page.locator('#map .pin-marker')).toHaveCount(5);
     await expect(page.locator('#trip-progress')).toContainText('5/5');
   });
@@ -138,7 +140,8 @@ test.describe('siViaggiamo v1.7 — Ireland Edition', () => {
     await expect(page.locator('#guide-results')).toContainText(/St\. Kevin/);
     await expect(page.locator('#guide-results')).not.toContainText(/dimostrativo|segnaposto/i);
     await expect(page.locator('#guide-results')).not.toContainText(/€|prezzo|tariffa/i);
-    await expect(page.locator('#ticket-action')).toContainText(/Biglietto in preparazione/i, { timeout: 10000 });
+    await expect(page.locator('#ticket-action')).toContainText(/Scarica il tuo biglietto/i, { timeout: 10000 });
+    await expect(page.locator('#ticket-action .ticket-download')).toHaveAttribute('href', /biglietto-martina\.pdf$/);
   });
 
   test('Collegamento Mappa ↔ Guida dalla cartolina e dalla giornata', async ({ page }) => {

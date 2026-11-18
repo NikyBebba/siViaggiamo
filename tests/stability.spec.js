@@ -132,7 +132,8 @@ test.describe('Stability gate', () => {
       await page.locator('#sheet-advance').click(); // termina
       await expect(page.locator('#stop-sheet')).not.toHaveClass(/open/, { timeout: 10000 });
       // finale può essere mostrato; stato completato deve essere coerente
-      await expect(page.locator('#journey-guide')).toContainText(/Viaggio svelato|Mappa libera/i, { timeout: 15000 });
+      await expect(page.locator('#guide-skip')).toHaveText('Rivivi ↺', { timeout: 15000 });
+      await expect(page.locator('#journey-guide')).not.toContainText(/Mappa libera|Mostra tutto/i);
       const finaleVisible = await page.locator('#journey-finale').isVisible().catch(() => false);
       if (finaleVisible) {
         await page.locator('#finale-map').click().catch(async () => { await page.locator('#finale-close').click().catch(() => {}); });

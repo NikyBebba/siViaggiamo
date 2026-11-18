@@ -356,10 +356,14 @@ window.GUIDE = {
     },
   ],
   ticket: {
-    title: 'Il tuo biglietto regalo per l’Irlanda',
-    subtitle: 'Un voucher simbolico, tutto per Martina',
-    message: 'Cara Martina, questo è un piccolo promemoria di una sorpresa grande: un viaggio da vivere, passo dopo passo, con il sorriso. (Testo provvisorio — personalizzabile)',
-    note: 'Buono regalo simbolico · non valido come titolo di viaggio',
+    title: 'Il tuo biglietto per l’Irlanda 🇮🇪',
+    subtitle: 'Regalo di laurea · Martina & Lorenza',
+    message: 'La prossima avventura comincia da qui.',
+    note: 'Biglietto regalo simbolico — non valido come titolo di viaggio.',
+    recipients: 'Martina & Lorenza',
+    destination: 'Irlanda',
+    dates: '05–10 maggio 2027',
+    occasion: 'Regalo di laurea',
     pdfPath: 'assets/downloads/biglietto-martina.pdf',
   },
 };

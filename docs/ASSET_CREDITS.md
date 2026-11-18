@@ -1,4 +1,4 @@
-# Crediti asset — siViaggiamo v1.7.2 (Ireland Edition)
+# Crediti asset — siViaggiamo v1.8 (Graduation Gift)
 
 Questo file registra la provenienza delle immagini usate nel sito. Le fotografie personali restano in `Photos/` (esclusa da Git); in `assets/images/` sono presenti solo le copie approvate e ottimizzate.
 
@@ -16,7 +16,7 @@ Le cinque fotografie delle cartoline sono state **fornite direttamente dal Produ
 
 Tutte le copie pubbliche sono WebP (qualità 84, metodo 6), senza metadati EXIF/ICC/XMP e senza upscaling. Gli originali restano intatti in `Photos/`. Dettagli operativi in `docs/POSTCARD_16X9_MANIFEST.md`.
 
-> **Criticalità di licenza:** per queste cinque immagini autore e licenza non risultano verificati. La provenienza documentale disponibile **non è sufficiente a dimostrare il diritto di pubblicazione**: prima di pubblicare la v1.7.2 serve una conferma esplicita del Product Owner. Non è stata inventata alcuna attribuzione. Le immagini non sono state pubblicate: il lavoro è stato solo committato localmente.
+> **Criticalità di licenza (ancora aperta in v1.8):** per queste cinque immagini autore e licenza non risultano verificati. La provenienza documentale disponibile **non è sufficiente a dimostrare il diritto di pubblicazione**: prima di pubblicare la v1.8 serve una conferma esplicita del Product Owner. Non è stata inventata alcuna attribuzione. Le immagini non sono state pubblicate: il lavoro è stato solo committato localmente.
 
 ## Immagini da Wikimedia Commons (ancora usate nella Guida)
 

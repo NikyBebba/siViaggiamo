@@ -61,8 +61,9 @@ test.describe('Hotfix cartoline tour', () => {
     await page.locator('#sheet-advance').click(); // termina scoperta
     await expect(page.locator('#stop-sheet')).not.toHaveClass(/open/, { timeout: 15000 });
     await expect(page.locator('#journey-finale')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('#journey-finale')).toContainText(/sorpresa|tappe|esplorare/i);
-    await expect(page.locator('#journey-guide')).toContainText(/Viaggio svelato|Mappa libera/i);
+    await expect(page.locator('#journey-finale')).toContainText(/Viaggio svelato|biglietto|Irlanda/i);
+    await expect(page.locator('#guide-skip')).toHaveText('Rivivi ↺');
+    await expect(page.locator('#journey-guide')).not.toContainText(/Mappa libera|Mostra tutto/i);
   });
 
   test('scopri prossima: chiude cartolina, muove e apre la successiva', async ({ page }) => {
@@ -103,7 +104,10 @@ test.describe('Hotfix cartoline tour', () => {
     await expect(page.locator('#journey-finale')).toBeVisible({ timeout: 15000 });
     await page.locator('#finale-map').click();
     await expect(page.locator('#journey-finale')).toBeHidden();
-    await expect(page.locator('#journey-guide')).toContainText(/Mappa libera|Viaggio svelato/i, { timeout: 15000 });
+    await expect(page.locator('#map-view')).toHaveClass(/active/);
+    await expect(page.locator('#guide-skip')).toHaveText('Rivivi ↺');
+    await expect(page.locator('#journey-guide')).not.toContainText(/Mappa libera|Mostra tutto/i);
+    await expect(page.locator('#map .pin-marker')).toHaveCount(5);
     await expect(page.locator('#stop-sheet')).not.toHaveClass(/open/);
 
     // Chiusura e riapertura in navigazione libera
@@ -162,7 +166,8 @@ test.describe('Hotfix cartoline tour', () => {
     await startOnMap(page);
     // completa rapidamente passando in esplorazione libera
     await page.locator('#guide-skip').click(); // Esplora liberamente
-    await expect(page.locator('#journey-guide')).toContainText(/Mappa libera|Viaggio/i, { timeout: 15000 });
+    await expect(page.locator('#guide-skip')).toHaveText('Rivivi ↺', { timeout: 15000 });
+    await expect(page.locator('#journey-guide')).not.toContainText(/Mappa libera|Mostra tutto/i);
 
     // ripeti la sorpresa
     await page.locator('#guide-skip').click(); // Rivivi ↺

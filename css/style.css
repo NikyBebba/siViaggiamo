@@ -316,3 +316,53 @@
   .seal-card{padding:18px 13px 14px;border-radius:18px}
   .seal-photo{margin:10px 0 4px}
 }
+
+/* siViaggiamo v1.8 — finale regalo, mappa libera essenziale e biglietto */
+.map-reset[hidden],.map-help[hidden]{display:none!important}
+
+/* Dopo la scoperta resta solo "Rivivi ↺": nessun pannello, nessun "Mostra tutto". */
+.journey-guide.replay-only{left:12px;right:auto;transform:none;width:auto;max-width:calc(100% - 24px);padding:6px 8px;border-radius:999px;background:#fffdf8ed;box-shadow:0 6px 20px #14372325}
+.journey-guide.replay-only .guide-compact-row{gap:8px;align-items:center}
+.journey-guide.replay-only .guide-main{flex:0 0 auto;min-width:0}
+.journey-guide.replay-only #guide-title,.journey-guide.replay-only .guide-text,.journey-guide.replay-only .guide-progress,.journey-guide.replay-only #guide-next{display:none!important}
+.journey-guide.replay-only #guide-label{display:block;margin:0;font-size:10px;white-space:nowrap}
+.journey-guide.replay-only .guide-actions{min-width:0;flex-direction:row}
+.journey-guide.replay-only .guide-skip{min-height:40px;padding:8px 14px;border:1px solid #214938;border-radius:999px;background:#214938;color:#fff;font-size:12px;font-weight:800;text-decoration:none}
+.journey-guide.replay-only .guide-skip:hover{background:#32654c}
+@media(max-width:759px){
+  .journey-guide.replay-only{left:10px;bottom:calc(var(--nav-clearance) + 10px);padding:5px 6px}
+  .journey-guide.replay-only #guide-label{font-size:9px}
+  .journey-guide.replay-only .guide-skip{padding:7px 12px}
+}
+
+.gift-ticket-section{margin:30px 0 8px;padding-top:18px;border-top:1px dashed #d8c7b4;scroll-margin-top:18px}
+.gift-ticket-section:focus{outline:none}
+.gift-ticket-section:focus-visible{outline:3px solid #c98b5f;outline-offset:6px;border-radius:16px}
+.gift-ticket{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) 40px;max-width:100%;margin:14px auto 10px;border:2px solid #e5d9c4;border-radius:18px;overflow:hidden;background:#fffdf7;box-shadow:0 14px 30px #244b3718}
+.gift-ticket:before{content:"";position:absolute;top:0;bottom:0;left:34px;border-left:2px dashed #d8c7b4}
+.gift-ticket:after{content:"";position:absolute;top:0;bottom:0;right:40px;border-left:2px dashed #d8c7b4}
+.gift-ticket-stub{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px 4px;background:#295642;color:#f7ecd9;font-size:12px;font-weight:800}
+.gift-ticket-stub span{writing-mode:vertical-rl;letter-spacing:.18em;font-size:9px}
+.gift-ticket-stub.right{background:#eac4a6;color:#5b4634;font-size:20px}
+.gift-ticket-body{min-width:0;padding:18px 16px}
+.gift-ticket-brand{font-size:14px;font-weight:800;letter-spacing:-.04em;color:#214938}
+.gift-ticket-brand span{color:#72a477;font-size:18px;margin-right:4px}
+.gift-ticket-occasion{margin-top:8px;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#a87555}
+.gift-ticket-to{font-family:'Fraunces',Georgia,serif;font-size:clamp(24px,5vw,38px);line-height:1.1;margin:4px 0 14px;color:#214938;overflow-wrap:anywhere}
+.gift-ticket-route{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;border-top:1px dashed #d8c7b4;border-bottom:1px dashed #d8c7b4;padding:12px 0}
+.gift-ticket-label{display:block;margin-bottom:3px;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#7b907e}
+.gift-ticket-route strong{font-size:13px;line-height:1.25;color:#355f45;overflow-wrap:anywhere}
+.gift-ticket-arrow{color:#d39a72;font-size:20px}
+.gift-ticket-message{margin-top:14px;font-family:'Fraunces',Georgia,serif;font-size:16px;font-style:italic;line-height:1.4;color:#5c8e69}
+.gift-ticket-note{margin:10px 0 0;text-align:center;font-size:11px;color:#7a6a5a}
+.gift-ticket-action{margin:14px 0 8px;display:grid;gap:8px}
+.gift-ticket-action .ticket-download{width:100%}
+.gift-back-map{display:block;margin:4px auto 0}
+@media(max-width:759px){
+  .gift-ticket{grid-template-columns:24px minmax(0,1fr) 30px}
+  .gift-ticket:before{left:24px}
+  .gift-ticket:after{right:30px}
+  .gift-ticket-body{padding:16px 12px}
+  .gift-ticket-stub{padding:8px 2px;font-size:10px}
+  .gift-ticket-stub.right{font-size:16px}
+}

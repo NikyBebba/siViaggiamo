@@ -332,6 +332,17 @@
     renderProgress();
   }
 
+  function pinAnchorFor(index) {
+    // Con tutto il percorso a schermo, su mobile Dublino e Howth distano pochi
+    // pixel: i loro cerchi da 40px si coprirebbero e uno dei due non sarebbe
+    // toccabile. In esplorazione libera li scostiamo appena, senza cambiare
+    // la posizione geografica usata per il percorso o per "Vedi sulla mappa".
+    if (!canExploreFreely() || !window.matchMedia('(max-width: 759px)').matches) return [20, 20];
+    if (index === 0) return [34, 30]; // Dublino: leggermente in alto a sinistra
+    if (index === 4) return [6, 10];  // Howth: leggermente in basso a destra
+    return [20, 20];
+  }
+
   function makePinIcon(index, active) {
     const stop = stops[index] || {};
     const hidden = !isStopRevealed(index);
@@ -339,7 +350,7 @@
       className: 'pin-marker' + (active ? ' active' : '') + (hidden ? ' locked' : ''),
       html: `<span style="background:${escapeHTML(stop.color || '#295642')}">${index + 1}</span>`,
       iconSize: [40, 40],
-      iconAnchor: [20, 20],
+      iconAnchor: pinAnchorFor(index),
     });
   }
 
@@ -807,6 +818,13 @@
   function updateUI() {
     updateHomeCta();
     updateGuide();
+    // In esplorazione libera tutti i pin sono già visibili: il pulsante
+    // "Mostra tutto il percorso" e l'aiuto non servono più sulla mappa.
+    const free = canExploreFreely() || isJourneyCompleted();
+    const fit = $('fit-map');
+    if (fit) fit.hidden = free;
+    const help = document.querySelector('.map-help');
+    if (help) help.hidden = free;
     renderProgress();
     if (sheetIsOpen()) $('stop-sheet')?.classList.toggle('expanded', state.sheetExpanded);
   }
@@ -841,29 +859,23 @@
     }
 
     if (canExploreFreely() || isJourneyCompleted()) {
-      const discovered = stops.length;
-      const compact = state.mode === 'free-exploration' || state.completionAcknowledged;
+      // v1.8: nessun pannello "Mappa libera" e nessun "Mostra tutto".
+      // Dopo la scoperta resta solo il controllo discreto "Rivivi ↺".
       guide.hidden = false;
-      guide.className = 'journey-guide compact ' + (compact ? 'compact-ui' : 'celebrate');
-      label.textContent = `Viaggio · ${discovered}/${stops.length}`;
-      progress.innerHTML = stops.map(() => '<span class="done" aria-hidden="true"></span>').join('');
-      if (!compact && state.mode === 'completed') {
-        title.textContent = 'Viaggio svelato!';
-        text.textContent = 'Tutte le tappe sono state scoperte. Ora puoi esplorare la mappa in libertà.';
-        next.textContent = 'Continua';
-        next.disabled = false;
-        skip.textContent = 'Rivivi ↺';
-        skip.hidden = false;
-      } else {
-        title.textContent = 'Mappa libera';
-        text.textContent = 'Tocca un pin o apri il diario.';
-        next.textContent = 'Mostra tutto';
-        next.disabled = false;
-        skip.textContent = 'Rivivi ↺';
-        skip.hidden = false;
-      }
+      guide.className = 'journey-guide compact replay-only';
+      label.textContent = `${stops.length} tappe scoperte`;
+      title.textContent = '';
+      text.textContent = '';
+      progress.innerHTML = '';
+      next.hidden = true;
+      next.disabled = true;
+      skip.hidden = false;
+      skip.textContent = 'Rivivi ↺';
+      skip.setAttribute('aria-label', 'Rivivi la scoperta guidata');
       return;
     }
+    next.hidden = false;
+    next.disabled = false;
 
     const show = state.mode === 'idle' || state.mode === 'stop-revealed';
     guide.hidden = !show;
@@ -871,6 +883,7 @@
     label.textContent = `Sorpresa · ${state.revealed}/${stops.length}`;
     progress.innerHTML = stops.map((_, i) => `<span class="${i < state.revealed ? 'done' : ''}" aria-hidden="true"></span>`).join('');
     skip.hidden = false;
+    skip.setAttribute('aria-label', 'Esplora liberamente la mappa');
 
     if (state.mode === 'idle') {
       title.textContent = 'Martina, pronta a partire?';
@@ -1205,26 +1218,49 @@
     updateEasterEgg();
   }
 
-  async function updateTicketUI() {
-    const wrap = $('ticket-action');
+  function renderTicketAction(id, available, path) {
+    const wrap = $(id);
     if (!wrap) return;
+    wrap.innerHTML = available
+      ? `<a class="primary-btn ticket-download" href="${escapeHTML(path)}" download>Scarica il tuo biglietto</a><p class="ticket-status ok">PDF verificato: pronto per il download.</p>`
+      : `<button type="button" class="primary-btn ticket-download" disabled aria-disabled="true">Scarica il tuo biglietto</button><p class="ticket-status pending">Biglietto in preparazione — il file verrà aggiunto in seguito.</p>`;
+  }
+
+  async function updateTicketUI() {
     const t = guideData.ticket || {};
-    const title = $('ticket-name'); if (title) title.textContent = t.title || 'Il tuo biglietto regalo per l’Irlanda';
-    const sub = $('ticket-sub'); if (sub) sub.textContent = t.subtitle || 'Un voucher simbolico, tutto per Martina';
-    const msg = $('ticket-message'); if (msg) msg.textContent = t.message || 'Testo di auguri provvisorio — personalizzabile.';
-    const note = $('ticket-note'); if (note) note.textContent = t.note || 'Buono regalo simbolico · non valido come titolo di viaggio';
+    const copy = {
+      'ticket-name': t.title || 'Il tuo biglietto per l’Irlanda 🇮🇪',
+      'ticket-sub': t.subtitle || 'Regalo di laurea · Martina & Lorenza',
+      'ticket-message': t.message || 'La prossima avventura comincia da qui.',
+      'ticket-note': t.note || 'Biglietto regalo simbolico — non valido come titolo di viaggio.',
+      'gift-ticket-occasion': t.occasion || 'Regalo di laurea',
+      'gift-ticket-recipients': t.recipients || 'Martina & Lorenza',
+      'gift-ticket-destination': t.destination || 'Irlanda',
+      'gift-ticket-dates': t.dates || '05–10 maggio 2027',
+      'gift-ticket-message': t.message || 'La prossima avventura comincia da qui.',
+    };
+    Object.entries(copy).forEach(([id, value]) => {
+      const el = $(id);
+      if (el) el.textContent = value;
+    });
+
     const path = t.pdfPath || 'assets/downloads/biglietto-martina.pdf';
-    wrap.innerHTML = `<span class="ticket-status">Verifica disponibilità…</span>`;
+    ['ticket-action', 'gift-ticket-action'].forEach((id) => {
+      const wrap = $(id);
+      if (wrap) wrap.innerHTML = `<span class="ticket-status">Verifica disponibilità…</span>`;
+    });
+
     let available = false;
     try {
-      const res = await fetch(path, { method: 'HEAD', cache: 'no-store' });
-      available = !!res.ok;
+      // Non basta il nome del file: verifichiamo risposta HTTP, content-type e magic bytes.
+      const res = await fetch(path, { cache: 'no-store' });
+      if (res.ok && /pdf/i.test(res.headers.get('content-type') || '')) {
+        const magic = await (await res.blob()).slice(0, 5).text();
+        available = magic === '%PDF-';
+      }
     } catch { available = false; }
-    if (available) {
-      wrap.innerHTML = `<a class="primary-btn ticket-download" href="${escapeHTML(path)}" download>Scarica il tuo biglietto</a><p class="ticket-status ok">Biglietto pronto per il download.</p>`;
-    } else {
-      wrap.innerHTML = `<button type="button" class="primary-btn ticket-download" disabled aria-disabled="true">Scarica il tuo biglietto</button><p class="ticket-status pending">Biglietto in preparazione — il file verrà aggiunto in seguito.</p>`;
-    }
+    renderTicketAction('ticket-action', available, path);
+    renderTicketAction('gift-ticket-action', available, path);
   }
 
   function initGuide() {
@@ -1280,8 +1316,32 @@
   $('seal-scrim')?.addEventListener('click', () => closeSealSurprise());
 
   $('finale-close')?.addEventListener('click', () => closeFinale());
-  $('finale-map')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); if (state.mode === 'completed') { state.completionAcknowledged = true; state.mode = 'free-exploration'; saveJourneyState(); } updateUI(); if (isMapViewActive()) fitRoute(true); });
-  $('finale-message')?.addEventListener('click', () => { closeFinale({ restoreFocus: false }); goto('message'); });
+  $('finale-ticket')?.addEventListener('click', () => {
+    // Il regalo è l'ultimo passo dell'esperienza: chiude il finale, mantiene il
+    // viaggio completato e porta direttamente all'anteprima nella Dedica.
+    closeFinale({ restoreFocus: false });
+    acknowledgeCompletion();
+    if (state.mode === 'completed') { state.completionAcknowledged = true; state.mode = 'free-exploration'; saveJourneyState(); }
+    updateUI();
+    goto('message');
+    const section = $('gift-ticket-section');
+    if (!section) return;
+    section.scrollIntoView({ behavior: reduceMotion() ? 'instant' : 'smooth', block: 'start' });
+    section.focus({ preventScroll: true });
+  });
+  $('finale-map')?.addEventListener('click', () => {
+    closeFinale({ restoreFocus: false });
+    acknowledgeCompletion();
+    if (state.mode === 'completed') { state.completionAcknowledged = true; state.mode = 'free-exploration'; saveJourneyState(); }
+    updateUI();
+    if (isMapViewActive()) fitRoute(true);
+    $('guide-skip')?.focus?.({ preventScroll: true });
+  });
+  $('gift-back-map')?.addEventListener('click', () => {
+    goto('map-view');
+    resumeJourneyOnMap();
+    $('guide-skip')?.focus?.({ preventScroll: true });
+  });
 
   document.addEventListener('keydown', (ev) => {
     // Il dialog delle foche ha priorità assoluta: trap del focus e Escape dedicato.

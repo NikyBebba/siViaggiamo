@@ -1,5 +1,7 @@
 # Manifesto fotografie cartoline 16:9 — v1.7.2 (definitivo)
 
+Queste cinque fotografie restano **invariate e definitive anche nella v1.8**; il finale, la mappa libera e il biglietto regalo non hanno modificato asset, ritagli o geometria. La conferma di licenza del Product Owner resta necessaria prima della pubblicazione (`docs/ASSET_CREDITS.md`).
+
 ## Geometria standard
 
 Tutte e cinque le cartoline usano lo stesso riquadro fotografico:
