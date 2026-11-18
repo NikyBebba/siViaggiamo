@@ -31,6 +31,7 @@ Questo file registra la provenienza e la licenza delle **immagini non prodotte d
 Le immagini seguenti provengono da `Photos/.prepared/` (foto di viaggio fornite e approvate) e non richiedono attribuzione esterna:
 
 - `avatar-martina.webp`, `avatar-lorenza.webp` — da `Photos/foto-martina.JPG` e `Photos/foto-lorenza.jpg`. Copie ottimizzate con correzione EXIF; originali intatti.
+- `home-temple-bar.webp` — da `Photos/Tra Amiche davanti al Temple Bar.png` (1536 × 1024). Copia WebP ottimizzata senza metadati EXIF/ICC; originale lasciato intatto in `Photos/`. Usata come fotografia della Home.
 - `glendalough-lago-paesaggio.webp`
 - `galway-quartiere-latino.webp`
 - `howth-cliff-walk.webp`

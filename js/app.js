@@ -541,6 +541,14 @@
     const isLast = state.revealed >= stops.length;
     const dayLabel = s.day ? `<span class="postcard-stamp">Giorno ${escapeHTML(s.day)}</span>` : '<span class="postcard-stamp">Cartolina</span>';
     const hasImage = !!s.image;
+    // Configurazione fotografica dichiarata in js/destinations.js: un'unica sorgente
+    // di verità, passata al CSS tramite custom properties (nessun override sparso).
+    const photo = s.photo || {};
+    const photoStyle = [
+      `--card-fit:${escapeHTML(photo.fit || 'contain')}`,
+      `--card-position:${escapeHTML(photo.position || 'center')}`,
+      `--card-aspect:${escapeHTML(photo.aspect || '16 / 9')}`,
+    ].join(';');
     const compactPhoto = hasImage
       ? `<img src="${escapeHTML(s.image)}" alt="" loading="lazy">`
       : `<span aria-hidden="true">${escapeHTML(s.icon || '☘')}</span>`;
@@ -564,7 +572,7 @@
     if (!expanded) {
       return `<div class="sheet-postcard compact">
         <div class="sheet-compact">
-          <div class="sheet-compact-thumb" data-icon="${escapeHTML(s.icon || '☘')}" style="background:linear-gradient(140deg,${escapeHTML(s.color || '#295642')},#b7d3b3)">${compactPhoto}</div>
+          <div class="sheet-compact-thumb" data-icon="${escapeHTML(s.icon || '☘')}" style="background:linear-gradient(140deg,${escapeHTML(s.color || '#295642')},#b7d3b3);${photoStyle}">${compactPhoto}</div>
           <div class="sheet-compact-body">
             <div class="postcard-meta">${dayLabel}<span class="stop-tag">TAPPA ${index + 1}</span></div>
             <h3 id="sheet-title">${escapeHTML(s.title)}</h3>
@@ -580,7 +588,7 @@
     }
 
     return `<div class="sheet-postcard expanded">
-      <div class="sheet-img" data-icon="${escapeHTML(s.icon || '☘')}" style="background:linear-gradient(140deg,${escapeHTML(s.color || '#295642')},#b7d3b3)">
+      <div class="sheet-img" data-icon="${escapeHTML(s.icon || '☘')}" style="background:linear-gradient(140deg,${escapeHTML(s.color || '#295642')},#b7d3b3);${photoStyle}">
         ${fullPhoto}
         <span class="sheet-sticker" aria-hidden="true">✦</span>
       </div>
